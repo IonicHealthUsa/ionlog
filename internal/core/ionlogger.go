@@ -9,6 +9,7 @@ import (
 	"time"
 
 	ionlogfile "github.com/IonicHealthUsa/ionlog/internal/logfile"
+	recordhistory "github.com/IonicHealthUsa/ionlog/internal/record_history"
 	ionservice "github.com/IonicHealthUsa/ionlog/internal/service"
 )
 
@@ -28,6 +29,7 @@ type ionLogger struct {
 	controlFlow
 	autoRotateInfo
 
+	history       *recordhistory.RecordHistory
 	logEngine     *slog.Logger
 	writerHandler ionWriter
 	reports       chan ionReport
@@ -36,6 +38,8 @@ type ionLogger struct {
 
 type IIonLogger interface {
 	ionservice.IService
+
+  History() *recordhistory.RecordHistory
 
 	SetRotationPeriod(period ionlogfile.PeriodicRotation)
 	SetFolder(folder string)
@@ -67,6 +71,7 @@ func newLogger() *ionLogger {
 	l.reports = make(chan ionReport)
 	l.logEngine = slog.New(l.CreateDefaultLogHandler())
 	l.rotationPeriod = ionlogfile.NoAutoRotate
+	l.history = recordhistory.NewRecordHistory()
 
 	return l
 }
@@ -78,6 +83,10 @@ func Logger() IIonLogger {
 
 func (i *ionLogger) SetRotationPeriod(period ionlogfile.PeriodicRotation) {
 	i.rotationPeriod = period
+}
+
+func (i *ionLogger) History() *recordhistory.RecordHistory {
+	return i.history
 }
 
 func (i *ionLogger) SetFolder(folder string) {
