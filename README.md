@@ -1,6 +1,6 @@
 # IonLog
 
-## Usage
+# Usage
 ```go
 package main
 
@@ -55,3 +55,52 @@ func main() {
 	}
 }
 ```
+# Library Import and Configuration:
+The library is imported from github.com/IonicHealthUsa/ionlog/pkg/ionlog.  
+Configuration is done using SetLogAttributes() method with several options:
+
+## Log Targets:
+ionlog.WithTargets() allows setting multiple log output destinations.  
+It supports:
+
+- Default output
+- Websocket
+- File writing
+- Custom writers
+
+## Static Fields:
+WithStaticFields() adds consistent metadata to all log entries.  
+In this example, a "computer-id" field is added to every log
+
+## Log File Rotation:
+WithLogFileRotation() configures automatic log file management.
+- Sets log file storage location to "logs" folder
+- Rotation period set to daily
+
+# Logging Methods:
+Standard log levels: Info(), Error(), Warn(), Debug();  
+Special logging methods:  
+
+Logs a message only once:
+- LogOnceInfo()
+- LogOnceError()
+- LogOnceWarn()
+- LogOnceDebug()
+
+Logs when the message changes:
+- LogOnChangeInfo()
+- LogOnChangeError()
+- LogOnChangeWarn()
+- LogOnChangeDebug()
+
+# Lifecycle Management:
+- Start() initializes the logger
+- Stop() (deferred) closes the logger when the program ends
+
+# Log Format:
+- Produces JSON-formatted logs
+- Includes timestamp, log level, message
+- Adds static fields, package, function, file, and line information
+
+# Internal Logging system:
+- Internal logs are handled by the slog package, and outputed to the os.Stdout by default.

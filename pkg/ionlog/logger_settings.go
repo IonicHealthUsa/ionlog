@@ -37,9 +37,9 @@ func WithTargets(w ...io.Writer) customAttrs {
 	}
 }
 
-// WithStaicFields sets the static fields for the logger, every log will have these fields.
+// WithStaticFields sets the static fields for the logger, every log will have these fields.
 // usage: WithStaicFields(map[string]string{"key": "value", "key2": "value2", ...})
-func WithStaicFields(attrs map[string]string) customAttrs {
+func WithStaticFields(attrs map[string]string) customAttrs {
 	return func(i ioncore.IIonLogger) {
 		index := 0
 		slogAttrs := make([]slog.Attr, len(attrs))
