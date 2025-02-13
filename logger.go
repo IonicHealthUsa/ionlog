@@ -8,8 +8,8 @@ import (
 	"github.com/IonicHealthUsa/ionlog/internal/usecases"
 )
 
-func Start() {
-	logcore.Logger().Start()
+func Start() error {
+	return logcore.Logger().Start()
 }
 
 func Stop() {
