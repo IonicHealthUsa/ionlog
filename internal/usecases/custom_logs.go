@@ -37,7 +37,7 @@ func LogOnChange(
 	line int,
 	msg string,
 ) bool {
-	id := memory.GenHash(fmt.Sprintf("%s%s%s%d", pkg, function, file, line))
+	id := memory.GenHash(fmt.Sprintf("%s%s%s", pkg, function, file))
 
 	rec := logHistory.GetRecord(id)
 	if rec == nil {
