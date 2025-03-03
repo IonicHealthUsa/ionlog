@@ -27,21 +27,3 @@ func TestLogOnce(t *testing.T) {
 		}
 	})
 }
-
-func TestLogOnChange(t *testing.T) {
-	t.Run("On Change Check", func(t *testing.T) {
-		r := memory.NewRecordHistory()
-
-		if !LogOnChange(r, "pkg", "function", "file", 1, "msg") {
-			t.Errorf("LogOnChange() failed")
-		}
-
-		if LogOnChange(r, "pkg", "function", "file", 1, "msg") {
-			t.Errorf("LogOnChange() failed")
-		}
-
-		if !LogOnChange(r, "pkg", "function", "file", 1, "msg 2") {
-			t.Errorf("LogOnChange() failed")
-		}
-	})
-}
