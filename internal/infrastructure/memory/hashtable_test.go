@@ -1,6 +1,35 @@
 package memory
 
-import "testing"
+import (
+	"testing"
+)
+
+func TestNewRecordHistory(t *testing.T) {
+	r := NewRecordHistory()
+	if r == nil {
+		t.Errorf("NewRecordHistory() failed")
+	}
+	if _, ok := r.(*recordHistory); !ok {
+		t.Errorf("NewRecordHistory() failed")
+	}
+}
+
+func TestRecordUnityGetMsgHash(t *testing.T) {
+	r := recordUnity{
+		MsgHash: 1,
+	}
+	if r.GetMsgHash() != 1 {
+		t.Errorf("GetMsgHash() failed")
+	}
+}
+
+func TestRecordUnitySetMsgHash(t *testing.T) {
+	r := recordUnity{}
+	r.SetMsgHash(1)
+	if r.MsgHash != 1 {
+		t.Errorf("SetMsgHash() failed")
+	}
+}
 
 func TestGenHash(t *testing.T) {
 	tests := []struct {
@@ -26,7 +55,7 @@ func TestGenHash(t *testing.T) {
 func TestAddRecord(t *testing.T) {
 	t.Run("Simple Add", func(t *testing.T) {
 		r := NewRecordHistory()
-		err := r.AddRecord(1, "test", LogOnce)
+		err := r.AddRecord(1, "test")
 		if err != nil {
 			t.Errorf("AddRecord() failed")
 		}
@@ -34,12 +63,12 @@ func TestAddRecord(t *testing.T) {
 
 	t.Run("Collision Check", func(t *testing.T) {
 		r := NewRecordHistory()
-		err := r.AddRecord(1, "test", LogOnce)
+		err := r.AddRecord(1, "test")
 		if err != nil {
 			t.Errorf("AddRecord() failed")
 		}
 
-		err = r.AddRecord(1, "test", LogOnce)
+		err = r.AddRecord(1, "test")
 		if err != ErrRecordIDCollision {
 			t.Errorf("AddRecord() failed; Expected collision error")
 		}
@@ -50,7 +79,7 @@ func TestRemoveRecord(t *testing.T) {
 	t.Run("Simple Remove", func(t *testing.T) {
 		id := uint64(1)
 		r := NewRecordHistory()
-		r.AddRecord(id, "test", LogOnce)
+		r.AddRecord(id, "test")
 
 		if r.GetRecord(id) == nil {
 			t.Errorf("Test preset failed")
@@ -67,19 +96,43 @@ func TestRemoveRecord(t *testing.T) {
 func TestGetRecord(t *testing.T) {
 	t.Run("GetRecord", func(t *testing.T) {
 		r := NewRecordHistory()
-		r.AddRecord(1, "", LogOnce)
+		r.AddRecord(1, "")
 		if r.GetRecord(1) == nil {
 			t.Errorf("GetRecord() failed")
 		}
 	})
+}
 
-	t.Run("GetRecord instance check (pointer)", func(t *testing.T) {
-		r := NewRecordHistory()
-		r.AddRecord(1, "", LogOnce)
-		rec := r.GetRecord(1)
-		rec.Mode = LogOnChange
-		if r.GetRecord(1).Mode != LogOnChange {
-			t.Errorf("GetRecord() failed; Expected pointer instance")
+func TestReadRecord(t *testing.T) {
+	t.Run("ReadRecord", func(t *testing.T) {
+		_r := NewRecordHistory()
+		r := _r.(*recordHistory)
+		r.AddRecord(1, "")
+		if r.readRecord(1) == nil {
+			t.Errorf("readRecord() failed")
+		}
+	})
+}
+
+func TestWriteRecord(t *testing.T) {
+	t.Run("WriteRecord", func(t *testing.T) {
+		_r := NewRecordHistory()
+		r := _r.(*recordHistory)
+		r.writeRecord(1, &recordUnity{})
+		if r.records[1] == nil {
+			t.Errorf("writeRecord() failed")
+		}
+	})
+}
+
+func TestDeleteRecord(t *testing.T) {
+	t.Run("DeleteRecord", func(t *testing.T) {
+		_r := NewRecordHistory()
+		r := _r.(*recordHistory)
+		r.AddRecord(1, "")
+		r.deleteRecord(1)
+		if r.records[1] != nil {
+			t.Errorf("deleteRecord() failed")
 		}
 	})
 }
