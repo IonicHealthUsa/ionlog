@@ -11,12 +11,6 @@ import (
 
 type customAttrs func(i logcore.IIonLogger)
 
-const (
-	Daily   = logrotation.Daily
-	Weekly  = logrotation.Weekly
-	Monthly = logrotation.Monthly
-)
-
 // SetLogAttributes sets the log SetLogAttributes
 // fns is a variadic parameter that accepts customAttrs
 func SetLogAttributes(fns ...customAttrs) {

@@ -4,6 +4,13 @@ import (
 	"io"
 
 	ioncore "github.com/IonicHealthUsa/ionlog/internal/logcore"
+	"github.com/IonicHealthUsa/ionlog/internal/logrotation"
+)
+
+const (
+	Daily   = logrotation.Daily
+	Weekly  = logrotation.Weekly
+	Monthly = logrotation.Monthly
 )
 
 const (
