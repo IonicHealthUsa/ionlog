@@ -1,5 +1,4 @@
 // Package memory provides a way to keep track of the log history.
-// It allows custom logging modes, such as logOnce and logOnChange.
 package memory
 
 import (
@@ -13,7 +12,7 @@ type recordUnity struct {
 	MsgHash uint64
 }
 
-type recordHistory struct {
+type recordMemory struct {
 	records map[uint64]*recordUnity
 	mu      sync.Mutex
 }
@@ -23,14 +22,14 @@ type IRecordUnity interface {
 	SetMsgHash(msg uint64)
 }
 
-type IRecordHistory interface {
+type IRecordMemory interface {
 	AddRecord(id uint64, msg string) error
 	RemoveRecord(id uint64)
 	GetRecord(id uint64) IRecordUnity
 }
 
-func NewRecordHistory() IRecordHistory {
-	return &recordHistory{
+func NewRecordMemory() IRecordMemory {
+	return &recordMemory{
 		records: make(map[uint64]*recordUnity),
 	}
 }
@@ -47,7 +46,7 @@ func GenHash(s string) uint64 {
 	return xxhash.Sum64String(s)
 }
 
-func (r *recordHistory) AddRecord(id uint64, msg string) error {
+func (r *recordMemory) AddRecord(id uint64, msg string) error {
 	if r.readRecord(id) != nil {
 		return ErrRecordIDCollision
 	}
@@ -60,7 +59,7 @@ func (r *recordHistory) AddRecord(id uint64, msg string) error {
 	return nil
 }
 
-func (r *recordHistory) RemoveRecord(id uint64) {
+func (r *recordMemory) RemoveRecord(id uint64) {
 	if r.GetRecord(id) == nil {
 		slog.Debug("Trying to remove non-existing record")
 		return
@@ -68,7 +67,7 @@ func (r *recordHistory) RemoveRecord(id uint64) {
 	r.deleteRecord(id)
 }
 
-func (r *recordHistory) GetRecord(id uint64) IRecordUnity {
+func (r *recordMemory) GetRecord(id uint64) IRecordUnity {
 	record := r.readRecord(id)
 	if record == nil {
 		return nil // yeah, it have to be like this.
@@ -76,19 +75,19 @@ func (r *recordHistory) GetRecord(id uint64) IRecordUnity {
 	return record
 }
 
-func (r *recordHistory) readRecord(id uint64) *recordUnity {
+func (r *recordMemory) readRecord(id uint64) *recordUnity {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.records[id]
 }
 
-func (r *recordHistory) writeRecord(id uint64, req *recordUnity) {
+func (r *recordMemory) writeRecord(id uint64, req *recordUnity) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.records[id] = req
 }
 
-func (r *recordHistory) deleteRecord(id uint64) {
+func (r *recordMemory) deleteRecord(id uint64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	delete(r.records, id)

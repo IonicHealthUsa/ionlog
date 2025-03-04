@@ -110,7 +110,7 @@ func logOnce(level slog.Level, recordMsg string, callInfo []any) {
 	line := int(callInfo[3].(slog.Attr).Value.Int64())
 
 	proceed := usecases.LogOnce(
-		logcore.Logger().History(),
+		logcore.Logger().LogsMemory(),
 		pkg,
 		function,
 		file,

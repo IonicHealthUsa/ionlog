@@ -34,7 +34,7 @@ type ionLogger struct {
 	controlFlow
 	autoRotateInfo
 
-	history       memory.IRecordHistory
+	logsMemory    memory.IRecordMemory
 	logEngine     *slog.Logger
 	writerHandler ionWriter
 	reports       chan ionReport
@@ -44,7 +44,7 @@ type ionLogger struct {
 type IIonLogger interface {
 	interfaces.IService
 
-	History() memory.IRecordHistory
+	LogsMemory() memory.IRecordMemory
 
 	SetRotationPeriod(period logrotation.PeriodicRotation)
 	SetFolder(folder string)
@@ -77,7 +77,7 @@ func newLogger() *ionLogger {
 	l.reports = make(chan ionReport, 10000)
 	l.logEngine = slog.New(l.CreateDefaultLogHandler())
 	l.rotationPeriod = logrotation.NoAutoRotate
-	l.history = memory.NewRecordHistory()
+	l.logsMemory = memory.NewRecordMemory()
 
 	return l
 }
@@ -95,8 +95,8 @@ func (i *ionLogger) SetRotationPeriod(period logrotation.PeriodicRotation) {
 	i.rotationPeriod = period
 }
 
-func (i *ionLogger) History() memory.IRecordHistory {
-	return i.history
+func (i *ionLogger) LogsMemory() memory.IRecordMemory {
+	return i.logsMemory
 }
 
 func (i *ionLogger) SetFolder(folder string) {
