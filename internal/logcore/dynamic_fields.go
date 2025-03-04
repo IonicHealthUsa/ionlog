@@ -6,16 +6,47 @@ import (
 	"strings"
 )
 
+// functionData returns package, function name, file name and line number of the caller
 func functionData(skip int) (pkg, function, file string, line int) {
-	pc, file, line, _ := runtime.Caller(skip)
-	data := runtime.FuncForPC(pc).Name()
-	pkg = data[:strings.LastIndexByte(data, '.')]
-	if strings.Contains(pkg, "/") {
-		pkg = pkg[strings.LastIndexByte(pkg, '/')+1:]
+	// Get caller information
+	pc, fullFilePath, line, ok := runtime.Caller(skip)
+	if !ok {
+		slog.Warn("Failed to get caller information")
+		return "", "", "", 0
 	}
-	function = data[strings.LastIndexByte(data, '.')+1:]
-	file = file[strings.LastIndexByte(file, '/')+1:]
-	return
+
+	// Get function name
+	funcObj := runtime.FuncForPC(pc)
+	if funcObj == nil {
+		slog.Warn("Failed to get function object")
+		return "", "", "", 0
+	}
+
+	fullFuncName := funcObj.Name()
+
+	// Extract package name
+	lastDotIndex := strings.LastIndexByte(fullFuncName, '.')
+	if lastDotIndex < 0 {
+		pkg = ""
+		function = fullFuncName
+	} else {
+		pkg = fullFuncName[:lastDotIndex]
+		function = fullFuncName[lastDotIndex+1:]
+
+		// Get just the last part of the package path
+		if lastSlashIndex := strings.LastIndexByte(pkg, '/'); lastSlashIndex >= 0 {
+			pkg = pkg[lastSlashIndex+1:]
+		}
+	}
+
+	// Extract just the file name from the full path
+	if lastSlashIndex := strings.LastIndexByte(fullFilePath, '/'); lastSlashIndex >= 0 {
+		file = fullFilePath[lastSlashIndex+1:]
+	} else {
+		file = fullFilePath
+	}
+
+	return pkg, function, file, line
 }
 
 func GetRecordInformation() []any {
