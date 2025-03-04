@@ -6,7 +6,7 @@ import (
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/memory"
 )
 
-func LogOnce(logsMemory memory.IRecordMemory, pkg string, function string, file string, line int, msg string) bool {
+func LogOnce(logsMemory memory.IRecordMemory, pkg string, function string, file string, msg string) bool {
 	id := memory.GenHash(fmt.Sprintf("%s%s%s", pkg, function, file))
 
 	rec := logsMemory.GetRecord(id)

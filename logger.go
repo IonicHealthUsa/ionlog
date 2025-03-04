@@ -107,14 +107,12 @@ func logOnce(level slog.Level, recordMsg string, callInfo []any) {
 	pkg := string(callInfo[0].(slog.Attr).Value.String())
 	function := string(callInfo[1].(slog.Attr).Value.String())
 	file := string(callInfo[2].(slog.Attr).Value.String())
-	line := int(callInfo[3].(slog.Attr).Value.Int64())
 
 	proceed := usecases.LogOnce(
 		logcore.Logger().LogsMemory(),
 		pkg,
 		function,
 		file,
-		line,
 		recordMsg,
 	)
 
