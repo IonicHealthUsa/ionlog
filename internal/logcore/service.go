@@ -21,9 +21,9 @@ func (i *ionLogger) Start() error {
 
 		// block until the log rotate service sets up the file to write to.
 		i.logRotateService.BlockWrite()
-		i.servicesRunning.Add(1)
+		i.servicesWg.Add(1)
 		go func() {
-			defer i.servicesRunning.Done()
+			defer i.servicesWg.Done()
 
 			if err := i.logRotateService.Start(); err != nil {
 				slog.Error(err.Error())
@@ -32,9 +32,9 @@ func (i *ionLogger) Start() error {
 		}()
 	}
 
-	i.servicesRunning.Add(1)
+	i.servicesWg.Add(1)
 	go func() {
-		defer i.servicesRunning.Done()
+		defer i.servicesWg.Done()
 
 		i.handleIonReports()
 	}()
@@ -53,12 +53,12 @@ func (i *ionLogger) Stop() {
 
 	i.cancel()
 
-	i.reportsSync.Wait()
+	i.reportsWg.Wait()
 	slog.Debug("All reports have been processed")
 
 	if i.logRotateService != nil {
 		i.logRotateService.Stop()
 	}
 
-	i.servicesRunning.Wait()
+	i.servicesWg.Wait()
 }

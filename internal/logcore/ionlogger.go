@@ -18,8 +18,8 @@ import (
 type controlFlow struct {
 	ctx                   context.Context
 	cancel                context.CancelFunc
-	servicesRunning       sync.WaitGroup
-	reportsSync           sync.WaitGroup
+	servicesWg            sync.WaitGroup
+	reportsWg             sync.WaitGroup
 	blockIncommingReports bool
 }
 
@@ -132,11 +132,11 @@ func (i *ionLogger) SendReport(r ionReport) {
 	if i.blockIncommingReports {
 		return
 	}
-	i.reportsSync.Add(1)
+	i.reportsWg.Add(1)
 	select {
 	case <-time.After(timeout):
 		slog.Warn(fmt.Sprintf("Failed to send the report (timeout=%v): %v", timeout, r))
-		i.reportsSync.Done() // Will not be processed, so decrement the counter.
+		i.reportsWg.Done() // Will not be processed, so decrement the counter.
 		return
 	case i.reports <- r:
 	}
@@ -152,13 +152,13 @@ func (i *ionLogger) handleIonReports() {
 			i.blockIncommingReports = true
 			for len(i.reports) > 0 {
 				r := <-i.reports
-				i.reportsSync.Done()
+				i.reportsWg.Done()
 				i.log(r.level, r.msg, r.args...)
 			}
 			return
 
 		case r := <-i.reports:
-			i.reportsSync.Done()
+			i.reportsWg.Done()
 			i.log(r.level, r.msg, r.args...)
 		}
 	}
