@@ -8,3 +8,5 @@ const (
 	Weekly
 	Monthly
 )
+
+const NoMaxFolderSize uint = 0
