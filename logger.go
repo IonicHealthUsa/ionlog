@@ -3,13 +3,17 @@ package ionlog
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/logcore"
 	"github.com/IonicHealthUsa/ionlog/internal/usecases"
 )
 
-func Start() error {
-	return logcore.Logger().Start()
+func Start() {
+	startSync := sync.WaitGroup{}
+	startSync.Add(1)
+	go logcore.Logger().Start(&startSync)
+	startSync.Wait()
 }
 
 func Stop() {
