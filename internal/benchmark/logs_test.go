@@ -9,7 +9,11 @@ import (
 )
 
 func BenchmarkBasicIonlog(b *testing.B) {
-	ionlog.SetLogAttributes()
+	slog.SetDefault(slog.New(slog.NewTextHandler(ionlog.DefaultOutput, &slog.HandlerOptions{Level: slog.LevelError})))
+
+	ionlog.SetLogAttributes(
+		ionlog.SetReportsBufferSizer(100000),
+	)
 
 	// Start the logger service
 	ionlog.Start()
@@ -23,9 +27,11 @@ func BenchmarkBasicIonlog(b *testing.B) {
 }
 
 func BenchmarkIonlogStress(b *testing.B) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(ionlog.DefaultOutput, &slog.HandlerOptions{Level: slog.LevelError})))
+
 	ionlog.SetLogAttributes(
-		ionlog.WithTargets(ionlog.DefaultOutput),
 		ionlog.WithLogFileRotation(ionlog.DefaultLogFolder, 10*ionlog.Gibibyte, ionlog.Daily),
+		ionlog.SetReportsBufferSizer(100000),
 	)
 
 	ionlog.Start()
