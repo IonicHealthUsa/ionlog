@@ -92,7 +92,7 @@ func (i *ionLogger) SetLogRotationSettings(folder string, maxFolderSize uint, ro
 }
 
 func (i *ionLogger) SetReportsBufferSizer(size uint) {
-  i.reports = make(chan ionReport, size)
+	i.reports = make(chan ionReport, size)
 }
 
 func (i *ionLogger) LogEngine() *slog.Logger {

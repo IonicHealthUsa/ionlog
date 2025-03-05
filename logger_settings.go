@@ -52,3 +52,9 @@ func WithLogFileRotation(folder string, folderMaxSize uint, period logrotation.P
 		i.SetLogRotationSettings(folder, folderMaxSize, period)
 	}
 }
+
+func SetReportsBufferSizer(size uint) customAttrs {
+	return func(i logcore.IIonLogger) {
+		i.SetReportsBufferSizer(size)
+	}
+}
