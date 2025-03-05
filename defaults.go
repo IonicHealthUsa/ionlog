@@ -12,9 +12,10 @@ const (
 )
 
 const (
-	Kibibyte = 1024
-	Mebibyte = 1024 * Kibibyte
-	Gibibyte = 1024 * Mebibyte
+	NoMaxFolderSize = logrotation.NoMaxFolderSize
+	Kibibyte        = 1024
+	Mebibyte        = 1024 * Kibibyte
+	Gibibyte        = 1024 * Mebibyte
 )
 
 const DefaultLogFolder = "logs"
