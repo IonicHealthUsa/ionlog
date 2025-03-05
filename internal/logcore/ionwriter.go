@@ -11,9 +11,7 @@ type ionWriter struct {
 	writeTargets []io.Writer
 }
 
-var (
-	DefaultOutput = os.Stdout
-)
+var DefaultOutput = os.Stdout
 
 // Write writes the contents of p to all writeTargets
 // This function returns no error nor the number of bytes written

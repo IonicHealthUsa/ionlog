@@ -4,51 +4,43 @@ package logcore
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/memory"
-	"github.com/IonicHealthUsa/ionlog/internal/interfaces"
+	"github.com/IonicHealthUsa/ionlog/internal/ionservice"
 	"github.com/IonicHealthUsa/ionlog/internal/logrotation"
 )
 
-type controlFlow struct {
-	ctx                   context.Context
-	cancel                context.CancelFunc
-	servicesWg            sync.WaitGroup
-	reportsWg             sync.WaitGroup
-	blockIncommingReports bool
-}
-
-type autoRotateInfo struct {
-	logRotateService logrotation.ILogFileRotation
-	rotationPeriod   logrotation.PeriodicRotation
-	folder           string
-	maxFolderSize    uint
+type service struct {
+	ctx             context.Context
+	cancel          context.CancelFunc
+	serviceWg       sync.WaitGroup
+	incomingReports bool
+	serviceStatus   ionservice.ServiceStatus
 }
 
 type ionLogger struct {
-	controlFlow
-	autoRotateInfo
+	service
 
-	logsMemory    memory.IRecordMemory
+	logsMemory memory.IRecordMemory
+	logRotate  logrotation.ILogRotation
+
 	logEngine     *slog.Logger
 	writerHandler ionWriter
 	reports       chan ionReport
-	serviceStatus interfaces.ServiceStatus
 }
 
 type IIonLogger interface {
-	interfaces.IService
+	ionservice.IService
 
 	LogsMemory() memory.IRecordMemory
 
-	SetRotationPeriod(period logrotation.PeriodicRotation)
-	SetFolder(folder string)
-	SetFolderMaxSize(folderMaxSize uint)
+	SetLogRotationSettings(folder string, maxFolderSize uint, rotation logrotation.PeriodicRotation)
+
+	SetReportsBufferSizer(size uint)
 
 	LogEngine() *slog.Logger
 	SetLogEngine(handler *slog.Logger)
@@ -60,7 +52,7 @@ type IIonLogger interface {
 	SendReport(r ionReport)
 }
 
-const timeout = 10 * time.Millisecond
+const maxReports = 100
 
 var logger *ionLogger
 
@@ -68,16 +60,17 @@ func init() {
 	logger = newLogger()
 
 	// using internaly
-	slog.SetDefault(slog.New(slog.NewJSONHandler(DefaultOutput, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	slog.SetDefault(slog.New(slog.NewTextHandler(DefaultOutput, &slog.HandlerOptions{Level: slog.LevelDebug})))
 }
 
 func newLogger() *ionLogger {
 	l := &ionLogger{}
 	l.ctx, l.cancel = context.WithCancel(context.Background())
-	l.reports = make(chan ionReport, 10000)
+	l.reports = make(chan ionReport, maxReports)
 	l.logEngine = slog.New(l.CreateDefaultLogHandler())
-	l.rotationPeriod = logrotation.NoAutoRotate
+
 	l.logsMemory = memory.NewRecordMemory()
+	l.logRotate = nil
 
 	return l
 }
@@ -87,20 +80,19 @@ func Logger() IIonLogger {
 	return logger
 }
 
-func (i *ionLogger) SetFolderMaxSize(folderMaxSize uint) {
-	i.autoRotateInfo.maxFolderSize = folderMaxSize
-}
-
-func (i *ionLogger) SetRotationPeriod(period logrotation.PeriodicRotation) {
-	i.rotationPeriod = period
-}
-
 func (i *ionLogger) LogsMemory() memory.IRecordMemory {
 	return i.logsMemory
 }
 
-func (i *ionLogger) SetFolder(folder string) {
-	i.folder = folder
+// SetLogRotationSettings is a proxy to the log rotation service
+func (i *ionLogger) SetLogRotationSettings(folder string, maxFolderSize uint, rotation logrotation.PeriodicRotation) {
+	i.logRotate = logrotation.NewLogFileRotation()
+	i.logRotate.SetLogRotationSettings(folder, maxFolderSize, rotation)
+	i.SetTargets(append(i.Targets(), i.logRotate)...)
+}
+
+func (i *ionLogger) SetReportsBufferSizer(size uint) {
+  i.reports = make(chan ionReport, size)
 }
 
 func (i *ionLogger) LogEngine() *slog.Logger {
@@ -129,39 +121,34 @@ func (i *ionLogger) CreateDefaultLogHandler() slog.Handler {
 
 // SendReport sends the report to the Logger handler, it will wait for 10ms before returning.
 func (i *ionLogger) SendReport(r ionReport) {
-	if i.blockIncommingReports {
+	if i.incomingReports {
+		slog.Debug("Blocking incoming reports")
 		return
 	}
-	i.reportsWg.Add(1)
+
+	if len(i.reports) == maxReports {
+		slog.Debug("queue is full, dropping log")
+		return
+	}
+
 	select {
-	case <-time.After(timeout):
-		slog.Warn(fmt.Sprintf("Failed to send the report (timeout=%v): %v", timeout, r))
-		i.reportsWg.Done() // Will not be processed, so decrement the counter.
-		return
 	case i.reports <- r:
+		return
+
+	case <-time.After(1 * time.Millisecond):
+		slog.Warn("Timeout sending log report, dropping log")
+		return
 	}
+
 }
 
-// handleIonReports handles the reports sent to the logger
-// When the context is canceled, it will log all the reports in the queue before returning
-func (i *ionLogger) handleIonReports() {
-	for {
-		select {
-		case <-i.ctx.Done():
-			slog.Debug("Logger stopped by context")
-			i.blockIncommingReports = true
-			for len(i.reports) > 0 {
-				r := <-i.reports
-				i.reportsWg.Done()
-				i.log(r.level, r.msg, r.args...)
-			}
-			return
-
-		case r := <-i.reports:
-			i.reportsWg.Done()
-			i.log(r.level, r.msg, r.args...)
-		}
+func (i *ionLogger) syncReports() {
+	i.incomingReports = true
+	for len(i.reports) > 0 {
+		r := <-i.reports
+		i.log(r.level, r.msg, r.args...)
 	}
+	i.incomingReports = false
 }
 
 func (i *ionLogger) log(level slog.Level, msg string, args ...any) {
