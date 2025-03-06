@@ -1,7 +1,6 @@
 package logcore
 
 import (
-	"log/slog"
 	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/ionservice"
@@ -9,8 +8,6 @@ import (
 
 // Start starts the logger service, it blocks until the service is stopped
 func (i *ionLogger) Start(startSync *sync.WaitGroup) {
-	slog.Info("Logger service starting...")
-
 	i.serviceWg.Add(1)
 	defer i.serviceWg.Done()
 
@@ -31,8 +28,6 @@ func (i *ionLogger) Start(startSync *sync.WaitGroup) {
 	for {
 		select {
 		case <-i.ctx.Done():
-			slog.Debug("Logger service stopped by context")
-
 			i.syncReports()
 			return
 
@@ -44,15 +39,11 @@ func (i *ionLogger) Start(startSync *sync.WaitGroup) {
 
 // Stop stops the logger by canceling the context and waiting for the worker to finish
 func (i *ionLogger) Stop() {
-	slog.Info("Logger service stopping...")
-
 	i.cancel()
 	i.serviceWg.Wait()
-	slog.Info("All reports have been processed and the logger service has stopped.")
 
 	if i.logRotate != nil {
 		i.logRotate.Stop()
-		slog.Info("Logger rotation service has stopped.")
 	}
 }
 

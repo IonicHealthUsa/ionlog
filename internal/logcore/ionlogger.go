@@ -122,12 +122,10 @@ func (i *ionLogger) CreateDefaultLogHandler() slog.Handler {
 // SendReport sends the report to the Logger handler, it will wait for 10ms before returning.
 func (i *ionLogger) SendReport(r ionReport) {
 	if i.incomingReports {
-		slog.Debug("Blocking incoming reports")
 		return
 	}
 
 	if len(i.reports) == maxReports {
-		slog.Debug("queue is full, dropping log")
 		return
 	}
 
@@ -136,7 +134,6 @@ func (i *ionLogger) SendReport(r ionReport) {
 		return
 
 	case <-time.After(1 * time.Millisecond):
-		slog.Warn("Timeout sending log report, dropping log")
 		return
 	}
 

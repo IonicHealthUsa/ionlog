@@ -1,7 +1,6 @@
 package logrotation
 
 import (
-	"log/slog"
 	"sync"
 	"time"
 
@@ -9,8 +8,6 @@ import (
 )
 
 func (l *logRotation) Start(startSync *sync.WaitGroup) {
-	slog.Info("Logger rotation service starting...")
-
 	l.serviceWg.Add(1)
 	defer l.serviceWg.Done()
 
@@ -27,7 +24,6 @@ func (l *logRotation) Start(startSync *sync.WaitGroup) {
 	for {
 		select {
 		case <-l.ctx.Done():
-			slog.Info("Logger rotation service stopped by context.")
 			return
 
 		case <-ticker.C:
@@ -38,8 +34,6 @@ func (l *logRotation) Start(startSync *sync.WaitGroup) {
 }
 
 func (l *logRotation) Stop() {
-	slog.Debug("Logger rotation service stopping...")
-
 	l.cancel()
 	l.serviceWg.Wait()
 }

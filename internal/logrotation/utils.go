@@ -3,7 +3,6 @@ package logrotation
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -37,7 +36,7 @@ func (l *logRotation) getAllfiles() ([]string, error) {
 		}
 
 		if !filePattern.MatchString(file.Name()) {
-			slog.Warn(fmt.Sprintf("file: %s is not a valid log file. Skipping.", file.Name()))
+			fmt.Fprintf(os.Stderr, "file: %s is not a valid log file. Skipping.\n", file.Name())
 			continue
 		}
 
@@ -61,7 +60,7 @@ func (l *logRotation) getMostRecentLogFile() (string, error) {
 	for _, file := range files {
 		fileTime, err := l.getFileDate(file)
 		if err != nil {
-			slog.Warn(fmt.Sprintf("Failed to get file date for file: %s. Skipping.", file))
+			fmt.Fprintf(os.Stderr, "Failed to get file date for file: %s. Skipping.\n", file)
 			continue
 		}
 
@@ -85,7 +84,7 @@ func (l *logRotation) createNewFile() {
 
 	f, err := l.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
@@ -128,7 +127,7 @@ func (l *logRotation) checkRotation(fileDate time.Time) bool {
 	case Monthly:
 		return fileDate.Year() != y || fileDate.Month() != m
 	default:
-		slog.Error("rotation value is invalid")
+		fmt.Fprint(os.Stderr, "rotation value is invalid\n")
 		return false
 	}
 }
@@ -145,7 +144,7 @@ func (l *logRotation) getOldestLogFile() (string, error) {
 	for _, file := range files {
 		fileTime, err := l.getFileDate(file)
 		if err != nil {
-			slog.Warn(fmt.Sprintf("Failed to get file date for file: %s. Skipping.", file))
+			fmt.Fprintf(os.Stderr, "Failed to get file date for file: %s. Skipping.\n", file)
 			continue
 		}
 

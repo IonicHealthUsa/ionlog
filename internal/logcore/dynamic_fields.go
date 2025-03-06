@@ -1,7 +1,9 @@
 package logcore
 
 import (
+	"fmt"
 	"log/slog"
+	"os"
 	"runtime"
 	"strings"
 )
@@ -11,14 +13,14 @@ func functionData(skip int) (pkg, function, file string, line int) {
 	// Get caller information
 	pc, fullFilePath, line, ok := runtime.Caller(skip)
 	if !ok {
-		slog.Warn("Failed to get caller information")
+		fmt.Fprint(os.Stderr, "Failed to get caller information\n")
 		return "", "", "", 0
 	}
 
 	// Get function name
 	funcObj := runtime.FuncForPC(pc)
 	if funcObj == nil {
-		slog.Warn("Failed to get function object")
+		fmt.Fprint(os.Stderr, "Failed to get function object\n")
 		return "", "", "", 0
 	}
 

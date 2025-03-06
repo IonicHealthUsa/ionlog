@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"sync"
@@ -80,7 +79,7 @@ func (l *logRotation) SetLogRotationSettings(folder string, maxFolderSize uint, 
 func (l *logRotation) closeFile() {
 	if l.logFile != nil {
 		if err := l.logFile.Close(); err != nil {
-			slog.Warn(err.Error())
+			fmt.Fprintf(os.Stderr, "Error to close current log file: %v\n", err)
 		}
 		l.logFile = nil
 	}
@@ -88,7 +87,8 @@ func (l *logRotation) closeFile() {
 
 func (l *logRotation) setLogFile(file io.WriteCloser) {
 	if file == nil {
-		slog.Warn("Cannot set the log file: file is not valid")
+		fmt.Fprint(os.Stderr, "Cannot set the log file: file is not valid\n")
+		return
 	}
 
 	l.closeFile()
@@ -97,7 +97,7 @@ func (l *logRotation) setLogFile(file io.WriteCloser) {
 
 func (l *logRotation) autoRotate() {
 	if err := l.assertFolder(); err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintf(os.Stderr, "Error in assert folder: %v", err)
 		return
 	}
 
@@ -109,13 +109,13 @@ func (l *logRotation) autoRotate() {
 	}
 
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
 	fileDate, err := l.getFileDate(fileName)
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
@@ -128,7 +128,7 @@ func (l *logRotation) autoRotate() {
 	if l.logFile == nil {
 		actualFile, err := l.OpenFile(filepath.Join(l.folder, fileName), os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			slog.Error(err.Error())
+			fmt.Fprintln(os.Stderr, err.Error())
 			return
 		}
 		l.setLogFile(actualFile)
@@ -142,7 +142,7 @@ func (l *logRotation) autoCheckFolderSize() {
 
 	size, err := l.getFolderSize()
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
@@ -152,20 +152,19 @@ func (l *logRotation) autoCheckFolderSize() {
 
 	oldestFile, err := l.getOldestLogFile()
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
-	slog.Info(fmt.Sprintf("Removing file: %s", oldestFile))
 	if err = l.RemoveFile(filepath.Join(l.folder, oldestFile)); err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 
 	// check if it need to create a new file
 	files, err := l.getAllfiles()
 	if err != nil {
-		slog.Error(err.Error())
+		fmt.Fprintln(os.Stderr, err.Error())
 		return
 	}
 	if len(files) == 0 {

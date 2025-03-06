@@ -3,7 +3,6 @@ package logcore
 import (
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 )
 
@@ -18,13 +17,13 @@ var DefaultOutput = os.Stdout
 func (w *ionWriter) Write(p []byte) (int, error) {
 	for i, target := range w.writeTargets {
 		if target == nil {
-			slog.Error(fmt.Sprintf("Expected the %v° target to be not nil", i+1))
+			fmt.Fprintf(os.Stderr, "Expected the %v° target to be not nil\n", i+1)
 			continue
 		}
 
 		_, err := target.Write(p)
 		if err != nil {
-			slog.Error(fmt.Sprintf("Failed to write to in the %v° target, error: %v", i+1, err))
+			fmt.Fprintf(os.Stderr, "Failed to write to in the %v° target, error: %v\n", i+1, err)
 		}
 	}
 

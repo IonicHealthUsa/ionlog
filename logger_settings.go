@@ -1,8 +1,10 @@
 package ionlog
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
+	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/ionservice"
 	"github.com/IonicHealthUsa/ionlog/internal/logcore"
@@ -15,7 +17,7 @@ type customAttrs func(i logcore.IIonLogger)
 // fns is a variadic parameter that accepts customAttrs
 func SetLogAttributes(fns ...customAttrs) {
 	if logcore.Logger().Status() == ionservice.Running {
-		slog.Warn("Logger is already running, cannot set attributes")
+		fmt.Fprint(os.Stderr, "Logger is already running, cannot set attributes\n")
 		return
 	}
 
