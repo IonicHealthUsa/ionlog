@@ -112,7 +112,6 @@ func (i *ionLogger) SendReport(r *IonReport) {
 		fmt.Fprintf(os.Stderr, "Report timed out queue length: %d\n", len(i.reports))
 		return
 	}
-
 }
 
 func (i *ionLogger) syncReports() {
