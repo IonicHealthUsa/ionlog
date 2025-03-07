@@ -3,7 +3,6 @@ package ionlog
 import (
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/ionservice"
@@ -37,14 +36,7 @@ func WithTargets(w ...io.Writer) customAttrs {
 // usage: WithStaicFields(map[string]string{"key": "value", "key2": "value2", ...})
 func WithStaticFields(attrs map[string]string) customAttrs {
 	return func(i logcore.IIonLogger) {
-		index := 0
-		slogAttrs := make([]slog.Attr, len(attrs))
-		for k, v := range attrs {
-			slogAttrs[index] = slog.String(k, v)
-			index++
-		}
-		handler := i.CreateDefaultLogHandler().WithAttrs(slogAttrs)
-		i.SetLogEngine(slog.New(handler))
+		i.SetStaticFields(attrs)
 	}
 }
 
@@ -55,8 +47,8 @@ func WithLogFileRotation(folder string, folderMaxSize uint, period logrotation.P
 	}
 }
 
-func SetReportsBufferSizer(size uint) customAttrs {
+func SetReportsBufferSize(size uint) customAttrs {
 	return func(i logcore.IIonLogger) {
-		i.SetReportsBufferSizer(size)
+		i.SetReportsBufferSize(size)
 	}
 }
