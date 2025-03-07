@@ -32,7 +32,7 @@ func (i *ionLogger) Start(startSync *sync.WaitGroup) {
 			return
 
 		case r := <-i.reports:
-			i.log(r.level, r.msg, r.args...)
+			i.log(r)
 		}
 	}
 }

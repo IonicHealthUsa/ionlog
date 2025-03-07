@@ -4,8 +4,12 @@ package logcore
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
-	"log/slog"
+	"maps"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,11 +19,10 @@ import (
 )
 
 type service struct {
-	ctx             context.Context
-	cancel          context.CancelFunc
-	serviceWg       sync.WaitGroup
-	incomingReports bool
-	serviceStatus   ionservice.ServiceStatus
+	ctx           context.Context
+	cancel        context.CancelFunc
+	serviceWg     sync.WaitGroup
+	serviceStatus ionservice.ServiceStatus
 }
 
 type ionLogger struct {
@@ -28,9 +31,10 @@ type ionLogger struct {
 	logsMemory memory.IRecordMemory
 	logRotate  logrotation.ILogRotation
 
-	logEngine     *slog.Logger
 	writerHandler ionWriter
-	reports       chan ionReport
+	reports       chan *IonReport
+
+	staticFields map[string]string
 }
 
 type IIonLogger interface {
@@ -40,16 +44,13 @@ type IIonLogger interface {
 
 	SetLogRotationSettings(folder string, maxFolderSize uint, rotation logrotation.PeriodicRotation)
 
-	SetReportsBufferSizer(size uint)
+	SetReportsBufferSize(size uint)
 
-	LogEngine() *slog.Logger
-	SetLogEngine(handler *slog.Logger)
-
-	Targets() []io.Writer
 	SetTargets(targets ...io.Writer)
 
-	CreateDefaultLogHandler() slog.Handler
-	SendReport(r ionReport)
+	SetStaticFields(attrs map[string]string)
+
+	SendReport(r *IonReport)
 }
 
 const maxReports = 100
@@ -58,19 +59,14 @@ var logger *ionLogger
 
 func init() {
 	logger = newLogger()
-
-	// using internaly
-	slog.SetDefault(slog.New(slog.NewTextHandler(DefaultOutput, &slog.HandlerOptions{Level: slog.LevelDebug})))
 }
 
 func newLogger() *ionLogger {
 	l := &ionLogger{}
 	l.ctx, l.cancel = context.WithCancel(context.Background())
-	l.reports = make(chan ionReport, maxReports)
-	l.logEngine = slog.New(l.CreateDefaultLogHandler())
+	l.reports = make(chan *IonReport, maxReports)
 
 	l.logsMemory = memory.NewRecordMemory()
-	l.logRotate = nil
 
 	return l
 }
@@ -78,6 +74,10 @@ func newLogger() *ionLogger {
 // Logger returns the logger instance
 func Logger() IIonLogger {
 	return logger
+}
+
+func ResetLogger() {
+	logger = newLogger()
 }
 
 func (i *ionLogger) LogsMemory() memory.IRecordMemory {
@@ -88,78 +88,61 @@ func (i *ionLogger) LogsMemory() memory.IRecordMemory {
 func (i *ionLogger) SetLogRotationSettings(folder string, maxFolderSize uint, rotation logrotation.PeriodicRotation) {
 	i.logRotate = logrotation.NewLogFileRotation()
 	i.logRotate.SetLogRotationSettings(folder, maxFolderSize, rotation)
-	i.SetTargets(append(i.Targets(), i.logRotate)...)
+	i.writerHandler.AddTarget(i.logRotate)
 }
 
-func (i *ionLogger) SetReportsBufferSizer(size uint) {
-	i.reports = make(chan ionReport, size)
-}
-
-func (i *ionLogger) LogEngine() *slog.Logger {
-	return i.logEngine
-}
-
-func (i *ionLogger) SetLogEngine(handler *slog.Logger) {
-	i.logEngine = handler
-}
-
-func (i *ionLogger) Targets() []io.Writer {
-	return i.writerHandler.writeTargets
+func (i *ionLogger) SetReportsBufferSize(size uint) {
+	i.reports = make(chan *IonReport, size)
 }
 
 func (i *ionLogger) SetTargets(targets ...io.Writer) {
 	i.writerHandler.SetTargets(targets...)
 }
 
-// CreateDefaultLogHandler creates a default log handler for the logger
-func (i *ionLogger) CreateDefaultLogHandler() slog.Handler {
-	return slog.NewJSONHandler(
-		&i.writerHandler,
-		&slog.HandlerOptions{Level: slog.LevelDebug},
-	)
+func (i *ionLogger) SetStaticFields(attrs map[string]string) {
+	i.staticFields = attrs
 }
 
-// SendReport sends the report to the Logger handler, it will wait for 10ms before returning.
-func (i *ionLogger) SendReport(r ionReport) {
-	if i.incomingReports {
-		return
-	}
-
-	if len(i.reports) == maxReports {
-		return
-	}
-
+func (i *ionLogger) SendReport(r *IonReport) {
 	select {
 	case i.reports <- r:
 		return
 
-	case <-time.After(1 * time.Millisecond):
+	case <-time.After(1000 * time.Millisecond):
+		fmt.Fprintf(os.Stderr, "Report timed out queue length: %d\n", len(i.reports))
 		return
 	}
 
 }
 
 func (i *ionLogger) syncReports() {
-	i.incomingReports = true
 	for len(i.reports) > 0 {
 		r := <-i.reports
-		i.log(r.level, r.msg, r.args...)
+		i.log(r)
 	}
-	i.incomingReports = false
 }
 
-func (i *ionLogger) log(level slog.Level, msg string, args ...any) {
-	switch level {
-	case slog.LevelDebug:
-		i.logEngine.Debug(msg, args...)
-	case slog.LevelInfo:
-		i.logEngine.Info(msg, args...)
-	case slog.LevelWarn:
-		i.logEngine.Warn(msg, args...)
-	case slog.LevelError:
-		i.logEngine.Error(msg, args...)
+func (i *ionLogger) log(r *IonReport) {
+	msg := i.createLog(r)
+	i.writerHandler.Write(msg)
+}
 
-	default:
-		slog.Warn("Unknown log level")
+func (i *ionLogger) createLog(r *IonReport) []byte {
+	payload := map[string]string{
+		"time":     r.Datetime.Format(time.RFC3339),
+		"level":    r.Level.String(),
+		"msg":      r.Msg,
+		"file":     r.File,
+		"package":  r.PackageName,
+		"function": r.Function,
+		"line":     strconv.Itoa(r.Line),
 	}
+
+	maps.Copy(payload, i.staticFields)
+
+	msg, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to marshal payload: %v\n", err)
+	}
+	return append(msg, '\n')
 }

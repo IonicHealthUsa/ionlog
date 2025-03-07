@@ -1,19 +1,17 @@
 package logcore
 
-import (
-	"log/slog"
-)
+import "time"
 
-type ionReport struct {
-	level slog.Level
-	msg   string
-	args  []any
+type callerInfo struct {
+	File        string
+	PackageName string
+	Function    string
+	Line        int
 }
 
-func NewIonReport(level slog.Level, msg string, args []any) ionReport {
-	return ionReport{
-		level: level,
-		msg:   msg,
-		args:  args,
-	}
+type IonReport struct {
+	Datetime time.Time
+	Level    Level
+	Msg      string
+	callerInfo
 }

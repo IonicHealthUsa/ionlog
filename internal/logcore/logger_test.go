@@ -11,12 +11,3 @@ func TestNewLogger(t *testing.T) {
 		t.Errorf("Expected logger to be not nil")
 	}
 }
-
-func TestCreateDefaultLogHandler(t *testing.T) {
-	_logger := newLogger()
-	handler := _logger.CreateDefaultLogHandler()
-
-	if handler == nil {
-		t.Errorf("Expected handler to be not nil")
-	}
-}

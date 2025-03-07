@@ -2,26 +2,32 @@ package logcore
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"runtime"
 	"strings"
 )
 
-// functionData returns package, function name, file name and line number of the caller
-func functionData(skip int) (pkg, function, file string, line int) {
+func GetCallerInfo(skip int) *callerInfo {
+	var (
+		file     string
+		pkg      string
+		function string
+	)
+
+	var line int
+
 	// Get caller information
 	pc, fullFilePath, line, ok := runtime.Caller(skip)
 	if !ok {
 		fmt.Fprint(os.Stderr, "Failed to get caller information\n")
-		return "", "", "", 0
+		return nil
 	}
 
 	// Get function name
 	funcObj := runtime.FuncForPC(pc)
 	if funcObj == nil {
 		fmt.Fprint(os.Stderr, "Failed to get function object\n")
-		return "", "", "", 0
+		return nil
 	}
 
 	fullFuncName := funcObj.Name()
@@ -48,15 +54,10 @@ func functionData(skip int) (pkg, function, file string, line int) {
 		file = fullFilePath
 	}
 
-	return pkg, function, file, line
-}
-
-func GetRecordInformation() []any {
-	pkg, function, file, line := functionData(3)
-	recInf := make([]any, 4)
-	recInf[0] = slog.String("package", pkg)
-	recInf[1] = slog.String("function", function)
-	recInf[2] = slog.String("file", file)
-	recInf[3] = slog.Int("line", line)
-	return recInf
+	return &callerInfo{
+		File:        file,
+		PackageName: pkg,
+		Function:    function,
+		Line:        line,
+	}
 }
