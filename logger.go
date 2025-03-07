@@ -149,6 +149,36 @@ func Debugf(msg string, args ...any) {
 	logcore.Logger().SendReport(&report)
 }
 
+func Trace(msg string) {
+	callerInfo := logcore.GetCallerInfo(2)
+
+	report := logcore.IonReport{}
+	report.Datetime = time.Now()
+	report.Level = logcore.Trace
+	report.Msg = msg
+	report.File = callerInfo.File
+	report.PackageName = callerInfo.PackageName
+	report.Function = callerInfo.Function
+	report.Line = callerInfo.Line
+
+	logcore.Logger().LogReport(&report)
+}
+
+func Tracef(msg string, args ...any) {
+	callerInfo := logcore.GetCallerInfo(2)
+
+	report := logcore.IonReport{}
+	report.Datetime = time.Now()
+	report.Level = logcore.Trace
+	report.Msg = fmt.Sprintf(msg, args...)
+	report.File = callerInfo.File
+	report.PackageName = callerInfo.PackageName
+	report.Function = callerInfo.Function
+	report.Line = callerInfo.Line
+
+	logcore.Logger().LogReport(&report)
+}
+
 func LogOnceInfo(msg string) {
 	logOnce(logcore.Info, msg)
 }

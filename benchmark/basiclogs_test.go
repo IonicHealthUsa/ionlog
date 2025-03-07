@@ -15,6 +15,12 @@ func BenchmarkBasicLogs(b *testing.B) {
 
 	b.ResetTimer()
 
+	b.Run("Trace", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ionlog.Trace(fakeMessage)
+		}
+	})
+
 	b.Run("Debug", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			ionlog.Debug(fakeMessage)
@@ -47,6 +53,12 @@ func BenchmarkBasicLogsFormated(b *testing.B) {
 
 	b.ResetTimer()
 
+	b.Run("Trace", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			ionlog.Tracef("my msg is: %v", fakeMessage)
+		}
+	})
+
 	b.Run("Debug", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			ionlog.Debugf("my msg is: %v", fakeMessage)
@@ -78,6 +90,14 @@ func BenchmarkBasicLogsParallel(b *testing.B) {
 	defer ionlog.Stop()
 
 	b.ResetTimer()
+
+	b.Run("Trace", func(b *testing.B) {
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				ionlog.Trace(fakeMessage)
+			}
+		})
+	})
 
 	b.Run("Debug", func(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {
@@ -118,6 +138,14 @@ func BenchmarkBasicLogsFormatedParallel(b *testing.B) {
 	defer ionlog.Stop()
 
 	b.ResetTimer()
+
+	b.Run("Trace", func(b *testing.B) {
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				ionlog.Tracef("my msg is: %v", fakeMessage)
+			}
+		})
+	})
 
 	b.Run("Debug", func(b *testing.B) {
 		b.RunParallel(func(pb *testing.PB) {

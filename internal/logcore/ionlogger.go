@@ -28,6 +28,8 @@ type service struct {
 type ionLogger struct {
 	service
 
+	logMux sync.Mutex
+
 	logsMemory memory.IRecordMemory
 	logRotate  logrotation.ILogRotation
 
@@ -51,6 +53,7 @@ type IIonLogger interface {
 	SetStaticFields(attrs map[string]string)
 
 	SendReport(r *IonReport)
+	LogReport(r *IonReport)
 }
 
 const maxReports = 100
@@ -114,6 +117,11 @@ func (i *ionLogger) SendReport(r *IonReport) {
 	}
 }
 
+// LogReport a synchronous version of SendReport
+func (i *ionLogger) LogReport(r *IonReport) {
+	i.log(r)
+}
+
 func (i *ionLogger) syncReports() {
 	for len(i.reports) > 0 {
 		r := <-i.reports
@@ -122,6 +130,9 @@ func (i *ionLogger) syncReports() {
 }
 
 func (i *ionLogger) log(r *IonReport) {
+	i.logMux.Lock()
+	defer i.logMux.Unlock()
+
 	msg := i.createLog(r)
 	i.writerHandler.Write(msg)
 }
