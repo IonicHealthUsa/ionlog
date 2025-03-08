@@ -66,9 +66,9 @@ func init() {
 
 func newLogger() *ionLogger {
 	l := &ionLogger{}
+
 	l.ctx, l.cancel = context.WithCancel(context.Background())
 	l.reports = make(chan *IonReport, maxReports)
-
 	l.logsMemory = memory.NewRecordMemory()
 
 	return l
@@ -123,8 +123,8 @@ func (i *ionLogger) LogReport(r *IonReport) {
 }
 
 func (i *ionLogger) syncReports() {
-	for len(i.reports) > 0 {
-		r := <-i.reports
+	close(i.reports)
+	for r := range i.reports {
 		i.log(r)
 	}
 }

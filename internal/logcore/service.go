@@ -28,7 +28,6 @@ func (i *ionLogger) Start(startSync *sync.WaitGroup) {
 	for {
 		select {
 		case <-i.ctx.Done():
-			i.syncReports()
 			return
 
 		case r := <-i.reports:
@@ -40,7 +39,8 @@ func (i *ionLogger) Start(startSync *sync.WaitGroup) {
 // Stop stops the logger by canceling the context and waiting for the worker to finish
 func (i *ionLogger) Stop() {
 	i.cancel()
-	i.serviceWg.Wait()
+  i.serviceWg.Wait()
+	i.syncReports()
 
 	if i.logRotate != nil {
 		i.logRotate.Stop()
