@@ -1,4 +1,4 @@
-package logrotation
+package rotationengine
 
 import "errors"
 
