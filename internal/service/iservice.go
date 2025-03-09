@@ -1,4 +1,4 @@
-package ionservice
+package service
 
 import "sync"
 
