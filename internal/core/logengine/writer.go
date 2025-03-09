@@ -1,0 +1,53 @@
+package logengine
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"sync"
+)
+
+type ionWriter struct {
+	writeLock sync.Mutex
+	writers   []io.Writer
+}
+
+type IWriter interface {
+	io.Writer
+	SetWriters(writers ...io.Writer)
+	AddWriter(writer io.Writer)
+}
+
+func NewWriter() IWriter {
+	return &ionWriter{}
+}
+
+// Write writes the contents of p to all writeTargets
+// This function returns no error nor the number of bytes written
+func (i *ionWriter) Write(p []byte) (int, error) {
+	i.writeLock.Lock()
+	defer i.writeLock.Unlock()
+
+	for index, w := range i.writers {
+		if w == nil {
+			fmt.Fprintf(os.Stderr, "Expected the %v° target to be not nil\n", index+1)
+			continue
+		}
+
+		_, err := w.Write(p)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write to in the %v° target, error: %v\n", index+1, err)
+			continue
+		}
+	}
+
+	return 0, nil
+}
+
+func (i *ionWriter) SetWriters(writers ...io.Writer) {
+	i.writers = writers
+}
+
+func (i *ionWriter) AddWriter(writer io.Writer) {
+	i.writers = append(i.writers, writer)
+}

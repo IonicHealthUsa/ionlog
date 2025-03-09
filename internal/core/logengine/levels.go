@@ -1,4 +1,4 @@
-package logcore
+package logengine
 
 import "strconv"
 
