@@ -1,23 +1,23 @@
 package ionlog
 
 import (
-	ioncore "github.com/IonicHealthUsa/ionlog/internal/logcore"
-	"github.com/IonicHealthUsa/ionlog/internal/logrotation"
+	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/service"
 )
 
 const (
-	Daily   = logrotation.Daily
-	Weekly  = logrotation.Weekly
-	Monthly = logrotation.Monthly
+	Daily   = rotationengine.Daily
+	Weekly  = rotationengine.Weekly
+	Monthly = rotationengine.Monthly
 )
 
 const (
-	NoMaxFolderSize = logrotation.NoMaxFolderSize
-	Kibibyte        = 1024
-	Mebibyte        = 1024 * Kibibyte
-	Gibibyte        = 1024 * Mebibyte
+	NoMaxFolderSize uint = rotationengine.NoMaxFolderSize
+	Kibibyte        uint = 1024
+	Mebibyte        uint = 1024 * Kibibyte
+	Gibibyte        uint = 1024 * Mebibyte
 )
 
 const DefaultLogFolder = "logs"
 
-var DefaultOutput = ioncore.DefaultOutput
+var logger = service.NewCoreService()
