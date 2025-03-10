@@ -11,9 +11,9 @@ import (
 
 type customAttrs func(i service.ICoreService)
 
-// SetLogAttributes sets the log SetLogAttributes
+// SetAttributes sets the log SetAttributes
 // fns is a variadic parameter that accepts customAttrs
-func SetLogAttributes(fns ...customAttrs) {
+func SetAttributes(fns ...customAttrs) {
 	if logger.Status() == service.Running {
 		fmt.Fprint(os.Stderr, "Logger is already running, cannot set attributes\n")
 		return
@@ -46,7 +46,7 @@ func WithLogFileRotation(folder string, folderMaxSize uint, period rotationengin
 	}
 }
 
-func SetReportsBufferSize(size uint) customAttrs {
+func SetQueueSize(size uint) customAttrs {
 	return func(i service.ICoreService) {
 		i.LogEngine().SetReportQueueSize(size)
 	}
