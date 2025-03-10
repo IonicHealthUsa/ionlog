@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/core/runtimeinfo"
 )
 
 type rotationService struct {
@@ -34,6 +37,13 @@ func (r *rotationService) RotationEngine() rotationengine.IRotationEngine {
 }
 
 func (r *rotationService) Start(startSync *sync.WaitGroup) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			ci := runtimeinfo.GetCallerInfo(3)
+			fmt.Fprintf(os.Stderr, "rotation service panic: '%v' [%v](%v) %v:%v\n", rec, ci.Package, ci.Function, ci.File, ci.Line)
+		}
+	}()
+
 	r.serviceWg.Add(1)
 	defer r.serviceWg.Done()
 

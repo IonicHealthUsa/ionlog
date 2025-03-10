@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/logengine"
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/core/runtimeinfo"
 )
 
 type coreService struct {
@@ -43,6 +46,13 @@ func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, r
 
 // Start starts the logger service, it blocks until the service is stopped
 func (c *coreService) Start(startSync *sync.WaitGroup) {
+	defer func() {
+		if r := recover(); r != nil {
+			ci := runtimeinfo.GetCallerInfo(3)
+			fmt.Fprintf(os.Stderr, "logger service panic: '%v' [%v](%v) %v:%v\n", r, ci.Package, ci.Function, ci.File, ci.Line)
+		}
+	}()
+
 	c.serviceWg.Add(1)
 	defer c.serviceWg.Done()
 
