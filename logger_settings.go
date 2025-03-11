@@ -11,6 +11,10 @@ import (
 
 type customAttrs func(i service.ICoreService)
 
+func SetTraceMode(mode bool) {
+	logger.LogEngine().SetTraceMode(mode)
+}
+
 // SetAttributes sets the log SetAttributes
 // fns is a variadic parameter that accepts customAttrs
 func SetAttributes(fns ...customAttrs) {

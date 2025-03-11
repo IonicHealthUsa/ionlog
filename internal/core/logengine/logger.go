@@ -24,6 +24,7 @@ type logger struct {
 	writer     IWriter
 
 	staticFields map[string]string
+	traceMode    bool
 }
 
 type ILogger interface {
@@ -35,6 +36,8 @@ type ILogger interface {
 	Memory() memory.IRecordMemory
 	SetStaticFields(attrs map[string]string)
 	SetReportQueueSize(size uint)
+	SetTraceMode(mode bool)
+	TraceMode() bool
 }
 
 func NewLogger() ILogger {
@@ -112,4 +115,12 @@ func (l *logger) SetStaticFields(attrs map[string]string) {
 
 func (l *logger) SetReportQueueSize(size uint) {
 	l.reports = make(chan Report, size)
+}
+
+func (l *logger) SetTraceMode(mode bool) {
+	l.traceMode = mode
+}
+
+func (l *logger) TraceMode() bool {
+	return l.traceMode
 }

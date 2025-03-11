@@ -120,6 +120,9 @@ func Debugf(msg string, args ...any) {
 }
 
 func Trace(msg string) {
+	if !logger.LogEngine().TraceMode() {
+		return
+	}
 	logger.LogEngine().Report(
 		logengine.Report{
 			Time:       time.Now().Format(time.RFC3339),
@@ -131,6 +134,9 @@ func Trace(msg string) {
 }
 
 func Tracef(msg string, args ...any) {
+	if !logger.LogEngine().TraceMode() {
+		return
+	}
 	logger.LogEngine().Report(
 		logengine.Report{
 			Time:       time.Now().Format(time.RFC3339),
