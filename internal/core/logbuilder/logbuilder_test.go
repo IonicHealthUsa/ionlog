@@ -19,7 +19,7 @@ type CallerInfo struct {
 func BenchmarkStaticFields(b *testing.B) {
 	l2 := NewLogBuilder()
 
-	b.Run("log builder String function", func(b *testing.B) {
+	b.Run("log builder compile function", func(b *testing.B) {
 		for range b.N {
 			var callerInfo CallerInfo
 
