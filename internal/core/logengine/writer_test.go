@@ -243,41 +243,52 @@ func TestWrite(t *testing.T) {
 			},
 		}
 
-		normalWriter := &bytes.Buffer{}
+		var bufMutex sync.Mutex
+		var buf string
+
+		normalWriter := &MockWriter{
+			WriteFunc: func(p []byte) (int, error) {
+				bufMutex.Lock()
+				defer bufMutex.Unlock()
+
+				buf += string(p)
+				return len(p), nil
+			},
+		}
 
 		w.SetWriters(normalWriter, blockingWriter)
 
-		wg1 := &sync.WaitGroup{}
-		wg1.Add(1)
 		go func() {
-			wg1.Done()
-			w.Write([]byte("test1"))
+			w.Write([]byte("test1")) // blocked by second write
 		}()
-		wg1.Wait()
 		time.Sleep(10 * time.Millisecond) // At least the normal writer should have written by now
 
-		if normalWriter.String() != "test1" {
-			t.Errorf("First write did not complete: got %q", normalWriter.String())
+		bufMutex.Lock()
+		if buf != "test1" {
+			t.Errorf("First write did not complete: got %q", buf)
 		}
+		bufMutex.Unlock()
 
-		wg2 := &sync.WaitGroup{}
-		wg2.Add(1)
 		go func() {
-			wg2.Done()
 			w.Write([]byte("test2"))
 		}()
-		wg2.Wait()
 		time.Sleep(10 * time.Millisecond) // Same wait, but not expecting the second write to complete
-		if normalWriter.String() == "test2" {
+
+		bufMutex.Lock()
+		if strings.Contains(buf, "test2") {
 			t.Errorf("Second write completed before first write")
 		}
+		bufMutex.Unlock()
 
 		// Signal the blocking writer to continue
 		close(blockCh)
 		time.Sleep(10 * time.Millisecond) // Same wait, but now expecting the second write to complete
-		if normalWriter.String() != "test1test2" {
-			t.Errorf("Second write did not complete: got %q", normalWriter.String())
+
+		bufMutex.Lock()
+		if buf != "test1test2" {
+			t.Errorf("Second write did not complete: got %q", buf)
 		}
+		bufMutex.Unlock()
 	})
 }
 
