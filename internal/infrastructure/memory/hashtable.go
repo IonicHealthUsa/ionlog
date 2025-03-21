@@ -70,6 +70,8 @@ func (r *recordMemory) RemoveRecord(id uint64) {
 func (r *recordMemory) GetRecord(id uint64) IRecordUnity {
 	record := r.readRecord(id)
 	if record == nil {
+		// accessed in 21/03/2025:
+		// check: https://trstringer.com/go-nil-interface-and-interface-with-nil-concrete-value/
 		return nil // yeah, it have to be like this.
 	}
 	return record
