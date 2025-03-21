@@ -10,7 +10,7 @@ var fakeMessage = "We shall not cease from exploration and the end of all our ex
 
 func BenchmarkBasicLogs(b *testing.B) {
 	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
-  ionlog.SetTraceMode(true)
+	ionlog.SetTraceMode(true)
 
 	ionlog.Start()
 	defer ionlog.Stop()
@@ -78,7 +78,7 @@ func BenchmarkBasicLogs(b *testing.B) {
 
 func BenchmarkBasicLogsParallel(b *testing.B) {
 	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
-  ionlog.SetTraceMode(true)
+	ionlog.SetTraceMode(true)
 
 	ionlog.Start()
 	defer ionlog.Stop()
