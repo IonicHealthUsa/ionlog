@@ -45,9 +45,13 @@ func (i *ionWriter) Write(p []byte) (int, error) {
 }
 
 func (i *ionWriter) SetWriters(writers ...io.Writer) {
+	i.writeLock.Lock()
+	defer i.writeLock.Unlock()
 	i.writers = writers
 }
 
 func (i *ionWriter) AddWriter(writer io.Writer) {
+	i.writeLock.Lock()
+	defer i.writeLock.Unlock()
 	i.writers = append(i.writers, writer)
 }
