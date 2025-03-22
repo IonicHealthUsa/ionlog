@@ -1,4 +1,3 @@
-
 .PHONY: audit
 audit:
 	go fmt ./...
@@ -14,3 +13,6 @@ code-coverage:
 	go tool cover -html /tmp/cover.out -o /tmp/cover.html
 	xdg-open /tmp/cover.html
 
+.PHONY: benchmark
+benchmark:
+	go test -benchmem -bench=. ./...
