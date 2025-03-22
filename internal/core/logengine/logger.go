@@ -2,6 +2,8 @@ package logengine
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -61,7 +63,8 @@ func (l *logger) AsyncReport(r Report) {
 	}
 	select {
 	case l.reports <- r:
-	case <-time.After(1 * time.Millisecond):
+	case <-time.After(1 * time.Second):
+		fmt.Fprintf(os.Stderr, "logger reports channel is full\n")
 	}
 }
 
