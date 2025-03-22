@@ -3,6 +3,7 @@ package logengine
 import (
 	"context"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/logbuilder"
@@ -18,6 +19,7 @@ type Report struct {
 }
 
 type logger struct {
+	builder    logbuilder.ILogBuilder
 	logsMemory memory.IRecordMemory
 	closed     bool
 	reports    chan Report
@@ -25,6 +27,8 @@ type logger struct {
 
 	staticFields map[string]string
 	traceMode    bool
+
+	reportLock sync.Mutex
 }
 
 type ILogger interface {
@@ -43,6 +47,7 @@ type ILogger interface {
 func NewLogger() ILogger {
 	logger := &logger{}
 
+	logger.builder = logbuilder.NewLogBuilder()
 	logger.logsMemory = memory.NewRecordMemory()
 	logger.reports = make(chan Report, 100)
 	logger.writer = NewWriter()
@@ -61,15 +66,16 @@ func (l *logger) AsyncReport(r Report) {
 }
 
 func (l *logger) Report(r Report) {
-	builder := logbuilder.NewLogBuilder()
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
 
 	if l.staticFields != nil {
 		for key, value := range l.staticFields {
-			builder.AddFields(key, value)
+			l.builder.AddFields(key, value)
 		}
 	}
 
-	builder.AddFields(
+	l.builder.AddFields(
 		"time", r.Time,
 		"level", r.Level.String(),
 		"msg", r.Msg,
@@ -79,7 +85,7 @@ func (l *logger) Report(r Report) {
 		"line", strconv.Itoa(r.CallerInfo.Line),
 	)
 
-	l.writer.Write(builder.Compile())
+	l.writer.Write(l.builder.Compile())
 }
 
 func (l *logger) FlushReports() {
