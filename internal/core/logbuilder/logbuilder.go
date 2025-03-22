@@ -1,11 +1,16 @@
 package logbuilder
 
 import (
-	"strings"
+	"fmt"
+	"os"
 )
 
+const bufsize = 1024
+const maxBufsize = bufsize * 512 // 1/2 MB
+
 type logBuilder struct {
-	buf strings.Builder
+	buf []byte
+	p   uint
 }
 
 type ILogBuilder interface {
@@ -16,14 +21,34 @@ type ILogBuilder interface {
 // NewLogBuilder creates a new logBody with initialized fields map
 func NewLogBuilder() ILogBuilder {
 	lb := &logBuilder{}
+	lb.buf = make([]byte, bufsize)
 	lb.resetBuff()
 	return lb
 }
 
+func (l *logBuilder) writeByte(b byte) {
+	if len(l.buf) >= maxBufsize {
+		fmt.Fprintf(os.Stderr, "logBuilder buffer is full, cannot handle more strings for this log entry.\n")
+		return
+	}
+	if l.p == uint(len(l.buf)) {
+		newBuf := make([]byte, len(l.buf)+bufsize)
+		copy(newBuf, l.buf)
+		l.buf = newBuf
+	}
+	l.buf[l.p] = b
+	l.p++
+}
+
+func (l *logBuilder) writeString(str string) {
+	for _, s := range []byte(str) {
+		l.writeByte(s)
+	}
+}
+
 func (l *logBuilder) resetBuff() {
-	l.buf.Reset()
-	l.buf.Grow(256)
-	l.buf.WriteByte('{')
+	l.p = 0
+	l.writeByte('{')
 }
 
 // AddFields adds a single field
@@ -32,23 +57,23 @@ func (l *logBuilder) AddFields(args ...string) {
 		return
 	}
 	for i := 0; i < len(args); i += 2 {
-		if len(l.buf.String()) > 1 {
-			l.buf.WriteByte(',')
+		if l.p > 1 {
+			l.writeByte(',')
 		}
-		l.buf.WriteByte('"')
-		l.buf.WriteString(args[i])
-		l.buf.WriteByte('"')
-		l.buf.WriteByte(':')
+		l.writeByte('"')
+		l.writeString(args[i])
+		l.writeByte('"')
+		l.writeByte(':')
 
-		l.buf.WriteByte('"')
-		l.buf.WriteString(args[i+1])
-		l.buf.WriteByte('"')
+		l.writeByte('"')
+		l.writeString(args[i+1])
+		l.writeByte('"')
 	}
 }
 
 func (l *logBuilder) Compile() []byte {
 	defer l.resetBuff()
-	l.buf.WriteString("}\n")
+	l.writeString("}\n")
 
-	return []byte(l.buf.String())
+	return l.buf[:l.p]
 }

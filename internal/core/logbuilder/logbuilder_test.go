@@ -200,3 +200,30 @@ func TestSpecialCharacters(t *testing.T) {
 		}
 	})
 }
+
+func TestBufLimits(t *testing.T) {
+	t.Run("Buffer expands when full", func(t *testing.T) {
+		lb := NewLogBuilder()
+		_lb, ok := lb.(*logBuilder)
+		if !ok {
+			t.Errorf("NewLogBuilder() did not return a *logBuilder")
+		}
+
+		// Fill buffer to max
+		for len(_lb.buf) < maxBufsize {
+			lb.AddFields("key", "value")
+		}
+
+		if len(_lb.buf) != maxBufsize {
+			t.Error("Buffer size is not the expected size")
+		}
+
+		// add one more field
+		lb.AddFields("key", "value")
+
+		if len(_lb.buf) != maxBufsize {
+			t.Error("Buffer size is not the expected size")
+		}
+
+	})
+}
