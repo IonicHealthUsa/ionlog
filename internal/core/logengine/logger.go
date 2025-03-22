@@ -44,7 +44,7 @@ func NewLogger() ILogger {
 	logger := &logger{}
 
 	logger.logsMemory = memory.NewRecordMemory()
-	logger.reports = make(chan Report, 50)
+	logger.reports = make(chan Report, 100)
 	logger.writer = NewWriter()
 
 	return logger
