@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/memory"
 )
@@ -11,7 +12,10 @@ func LogOnce(logsMemory memory.IRecordMemory, msg string, args ...string) bool {
 
 	rec := logsMemory.GetRecord(id)
 	if rec == nil {
-		logsMemory.AddRecord(id, msg)
+		err := logsMemory.AddRecord(id, msg)
+		if err != nil {
+			fmt.Fprint(os.Stderr, "Failed to add record to memory\n")
+		}
 		return true
 	}
 
