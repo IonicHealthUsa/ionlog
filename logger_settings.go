@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/output"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
 )
 
@@ -56,4 +57,17 @@ func SetTraceMode(mode bool) customAttrs {
 	return func(i service.ICoreService) {
 		i.LogEngine().SetTraceMode(mode)
 	}
+}
+
+// GetOutputStyle return the style of output.
+// When the choice of style is false the return is default
+// stdout, without style.
+// When style is true the return is a custom stdout,
+// with style
+func GetOutputStyle(style bool) io.Writer {
+	if style {
+		return output.CustomOutput
+	}
+
+	return output.DefaultOutput
 }
