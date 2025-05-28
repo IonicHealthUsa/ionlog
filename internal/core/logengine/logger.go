@@ -31,6 +31,7 @@ type logger struct {
 	traceMode    bool
 
 	reportLock sync.Mutex
+	closeLock  sync.Mutex
 }
 
 type ILogger interface {
@@ -57,8 +58,20 @@ func NewLogger() ILogger {
 	return logger
 }
 
+func (l *logger) closeReport() {
+	l.closeLock.Lock()
+	defer l.closeLock.Unlock()
+	l.closed = true
+}
+
+func (l *logger) getStatusCloseReport() bool {
+	l.closeLock.Lock()
+	defer l.closeLock.Unlock()
+	return l.closed
+}
+
 func (l *logger) AsyncReport(r Report) {
-	if l.closed {
+	if l.getStatusCloseReport() {
 		return
 	}
 	select {
@@ -101,7 +114,7 @@ func (l *logger) HandleReports(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			l.closed = true
+			l.closeReport()
 			return
 
 		case r := <-l.reports:
