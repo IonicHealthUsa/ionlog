@@ -79,6 +79,12 @@ func (r *rotationEngine) getMostRecentLogFile() (string, error) {
 
 // createNewFile creates a new log file in the specified folder.
 func (r *rotationEngine) createNewFile() {
+	_, err := r.ReadDir(r.folder)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		return
+	}
+
 	filename := fmt.Sprintf(logFilePattern, time.Now().Format(time.DateOnly))
 	filePath := filepath.Join(r.folder, filename)
 

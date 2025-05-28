@@ -69,19 +69,19 @@ func TestSetWriters(t *testing.T) {
 
 	t.Run("Replaces existing writers", func(t *testing.T) {
 		w := NewWriter().(*ionWriter)
-		buf1 := &bytes.Buffer{}
+		buf := &bytes.Buffer{}
 
 		// Set initial writers
 		w.SetWriters(&bytes.Buffer{}, &bytes.Buffer{})
 
 		// Replace with new writers
-		w.SetWriters(buf1)
+		w.SetWriters(buf)
 
 		if len(w.writers) != 1 {
 			t.Errorf("Expected 1 writer after replacement, got %d", len(w.writers))
 		}
 
-		if w.writers[0] != buf1 {
+		if w.writers[0] != buf {
 			t.Errorf("Writers not replaced correctly")
 		}
 	})
@@ -98,6 +98,33 @@ func TestSetWriters(t *testing.T) {
 		if len(w.writers) != 0 {
 			t.Errorf("Expected empty writers slice, got %d writers", len(w.writers))
 		}
+	})
+
+	t.Run("should timeout when mutex is lock", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf := &bytes.Buffer{}
+
+		w.writeLock.Lock()
+		go func() {
+			w.SetWriters(buf)
+		}()
+		time.Sleep(10 * time.Millisecond)
+
+		if len(w.writers) != 0 {
+			t.Errorf("expected empty writers slice, but got %q writers", len(w.writers))
+		}
+
+		w.writeLock.Unlock()
+		time.Sleep(10 * time.Millisecond)
+		w.writeLock.Lock()
+		if len(w.writers) != 1 {
+			t.Errorf("expected one writers slice, but got %q writers", len(w.writers))
+		}
+
+		if w.writers[0] != buf {
+			t.Errorf("writers not replaced correctly")
+		}
+		w.writeLock.Unlock()
 	})
 }
 
@@ -132,6 +159,33 @@ func TestAddWriter(t *testing.T) {
 		if w.writers[0] != buf1 || w.writers[1] != buf2 {
 			t.Errorf("Writers not added correctly")
 		}
+	})
+
+	t.Run("should timeout when mutex is lock", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf := &bytes.Buffer{}
+
+		w.writeLock.Lock()
+		go func() {
+			w.AddWriter(buf)
+		}()
+		time.Sleep(10 * time.Millisecond)
+
+		if len(w.writers) != 0 {
+			t.Errorf("expected empty writers slice, but got %q writers", len(w.writers))
+		}
+
+		w.writeLock.Unlock()
+		time.Sleep(10 * time.Millisecond)
+		w.writeLock.Lock()
+		if len(w.writers) != 1 {
+			t.Errorf("expected one writer slice, but got %q writers", len(w.writers))
+		}
+
+		if w.writers[0] != buf {
+			t.Errorf("writers not replaced correctly")
+		}
+		w.writeLock.Unlock()
 	})
 }
 
