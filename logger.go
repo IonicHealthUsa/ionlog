@@ -11,6 +11,7 @@ import (
 	"github.com/IonicHealthUsa/ionlog/internal/usecases"
 )
 
+// Start begin the ionlog reports when it does not running
 func Start() {
 	startSync := sync.WaitGroup{}
 	startSync.Add(1)
@@ -18,6 +19,7 @@ func Start() {
 	startSync.Wait()
 }
 
+// Stop stop the ionlog reports and reset the logger
 func Stop() {
 	logger.Stop()
 	logger = service.NewCoreService() // Reset the logger
@@ -35,7 +37,8 @@ func Info(msg string) {
 	)
 }
 
-// Infof logs a message with level info. Arguments are handled in the manner of fmt.Printf.
+// Infof logs a message with level info.
+// Arguments are handled in the manner of fmt.Printf.
 func Infof(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
 		logengine.Report{
@@ -59,7 +62,8 @@ func Error(msg string) {
 	)
 }
 
-// Errorf logs a message with level error. Arguments are handled in the manner of fmt.Printf.
+// Errorf logs a message with level error.
+// Arguments are handled in the manner of fmt.Printf.
 func Errorf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
 		logengine.Report{
@@ -83,7 +87,8 @@ func Warn(msg string) {
 	)
 }
 
-// Warnf logs a message with level warn. Arguments are handled in the manner of fmt.Printf.
+// Warnf logs a message with level warn.
+// Arguments are handled in the manner of fmt.Printf.
 func Warnf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
 		logengine.Report{
@@ -107,7 +112,8 @@ func Debug(msg string) {
 	)
 }
 
-// Debugf logs a message with level debug. Arguments are handled in the manner of fmt.Printf.
+// Debugf logs a message with level debug.
+// Arguments are handled in the manner of fmt.Printf.
 func Debugf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
 		logengine.Report{
@@ -119,6 +125,7 @@ func Debugf(msg string, args ...any) {
 	)
 }
 
+// Trace logs a message with level trace only when trace mode is enable.
 func Trace(msg string) {
 	if !logger.LogEngine().TraceMode() {
 		return
@@ -133,6 +140,8 @@ func Trace(msg string) {
 	)
 }
 
+// Tracef logs a message with level trace only when trace mode is enable.
+// Arguments are handled in the manner of fmt.Printf.
 func Tracef(msg string, args ...any) {
 	if !logger.LogEngine().TraceMode() {
 		return
@@ -147,38 +156,55 @@ func Tracef(msg string, args ...any) {
 	)
 }
 
+// LogOnceInfo logs a message with level info only once time.
 func LogOnceInfo(msg string) {
 	logOnce(logengine.Info, msg)
 }
 
+// LogOnceInfof logs a message with level info only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceInfof(msg string, args ...any) {
 	logOnce(logengine.Info, fmt.Sprintf(msg, args...))
 }
 
+// LogOnceError logs a message with level error only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceError(msg string) {
 	logOnce(logengine.Error, msg)
 }
 
+// LogOnceErrorf logs a message with level error only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceErrorf(msg string, args ...any) {
 	logOnce(logengine.Error, fmt.Sprintf(msg, args...))
 }
 
+// LogOnceWarn logs a message with level warn only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceWarn(msg string) {
 	logOnce(logengine.Warn, msg)
 }
 
+// LogOnceWarnf logs a message with level warn only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceWarnf(msg string, args ...any) {
 	logOnce(logengine.Warn, fmt.Sprintf(msg, args...))
 }
 
+// LogOnceDebug logs a message with level debug only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceDebug(msg string) {
 	logOnce(logengine.Debug, msg)
 }
 
+// LogOnceDebugf logs a message with level debug only once time.
+// Arguments are handled in the manner of fmt.Printf.
 func LogOnceDebugf(msg string, args ...any) {
 	logOnce(logengine.Debug, fmt.Sprintf(msg, args...))
 }
 
+// logOnce send the information about the function
+// which called the log level to report queue asynchronously.
 func logOnce(level logengine.Level, recordMsg string) {
 	callerInfo := runtimeinfo.GetCallerInfo(3)
 
