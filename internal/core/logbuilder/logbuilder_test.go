@@ -42,9 +42,22 @@ func TestNewLogBuilder(t *testing.T) {
 		lb := NewLogBuilder()
 
 		// Check type assertion
-		_, ok := lb.(*logBuilder)
+		_lb, ok := lb.(*logBuilder)
 		if !ok {
 			t.Errorf("NewLogBuilder() did not return a *logBuilder")
+		}
+
+		b := make([]byte, bufsize)
+		b[0] = byte('{')
+
+		if cap(_lb.buf) != bufsize {
+			t.Errorf("expected the size of buffer to be %v, but got %v", bufsize, cap(_lb.buf))
+		}
+		if !reflect.DeepEqual(_lb.buf, b) {
+			t.Errorf("expected the byte to be %q, but got %q", b, _lb.buf)
+		}
+		if _lb.p != 1 {
+			t.Errorf("expected the pointer of buffer to be %v, but got %v", 1, _lb.p)
 		}
 
 		// Compile to check initial state
@@ -53,6 +66,48 @@ func TestNewLogBuilder(t *testing.T) {
 
 		if !reflect.DeepEqual(result, expected) {
 			t.Errorf("Initial buffer state incorrect, got: %s, want: %s", result, expected)
+		}
+	})
+}
+
+func TestWriteString(t *testing.T) {
+	t.Run("should transform the string to byte", func(t *testing.T) {
+		lb := NewLogBuilder()
+		_lb, ok := lb.(*logBuilder)
+		if !ok {
+			t.Errorf("NewLogBuilder() did not return a *logBuilder")
+		}
+
+		str := "hello world"
+		_lb.writeString(str)
+		b := []byte("{" + str + "\n")
+
+		if reflect.DeepEqual(_lb.buf[:_lb.p], b) {
+			t.Errorf("expected the buffer to be %q, but got %q", b, _lb.buf[:_lb.p])
+		}
+	})
+}
+
+func TestResetBuff(t *testing.T) {
+	t.Run("should reset the buffer pointer and overwrite the buffer", func(t *testing.T) {
+		lb := NewLogBuilder()
+		_lb, ok := lb.(*logBuilder)
+		if !ok {
+			t.Errorf("NewLogBuilder() did not return a *logBuilder")
+		}
+
+		b := []byte("hello world")
+		copy(_lb.buf, b)
+		_lb.p = uint(len(b))
+
+		_lb.resetBuff()
+
+		if _lb.p != 1 {
+			t.Errorf("expected the buffer pointer to be %q, but got %q", 1, _lb.p)
+		}
+
+		if _lb.buf[0] != byte('{') {
+			t.Errorf("expected the byte to be %q, but got %q", byte('{'), _lb.buf[0])
 		}
 	})
 }
@@ -224,6 +279,22 @@ func TestBufLimits(t *testing.T) {
 		if len(_lb.buf) != maxBufsize {
 			t.Error("Buffer size is not the expected size")
 		}
+	})
+}
 
+func TestWriteByte(t *testing.T) {
+	t.Run("should write the byte on buffer", func(t *testing.T) {
+		lb := NewLogBuilder()
+		_lb, ok := lb.(*logBuilder)
+		if !ok {
+			t.Errorf("NewLogBuilder() did not return a *logBuilder")
+		}
+
+		b := byte('r')
+		_lb.writeByte(b)
+
+		if _lb.buf[_lb.p-1] != b {
+			t.Errorf("exepcted the value of %q on buffer to be %q, bug got %q", _lb.p-1, b, _lb.buf[_lb.p-1])
+		}
 	})
 }

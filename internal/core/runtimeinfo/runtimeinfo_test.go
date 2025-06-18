@@ -79,6 +79,26 @@ func TestGetCallerInfo(t *testing.T) {
 			t.Errorf("function name should not be empty")
 		}
 	})
+
+	t.Run("should return empty caller info when skip is more than function on stack", func(t *testing.T) {
+		info := GetCallerInfo(5)
+
+		if info.File != "" {
+			t.Errorf("expected file to be empty, but got %q", info.File)
+		}
+
+		if info.Package != "" {
+			t.Errorf("expected package to be empty, but got %q", info.Package)
+		}
+
+		if info.Function != "" {
+			t.Errorf("expected function to be empty, but got %q", info.Function)
+		}
+
+		if info.Line != 0 {
+			t.Errorf("expected line to be 0, but got %q", info.Line)
+		}
+	})
 }
 
 func exampleFunction() CallerInfo {
