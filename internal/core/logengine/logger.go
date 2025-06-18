@@ -3,7 +3,9 @@ package logengine
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -41,6 +43,7 @@ type ILogger interface {
 	Writer() IWriter
 	Memory() memory.IRecordMemory
 	SetStaticFields(attrs map[string]string)
+	DeleteStaticField(fields ...string)
 	SetReportQueueSize(size uint)
 	SetTraceMode(mode bool)
 	TraceMode() bool
@@ -119,7 +122,24 @@ func (l *logger) Memory() memory.IRecordMemory {
 }
 
 func (l *logger) SetStaticFields(attrs map[string]string) {
-	l.staticFields = attrs
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
+
+	if l.staticFields == nil {
+		l.staticFields = attrs
+		return
+	}
+
+	maps.Copy(l.staticFields, attrs)
+}
+
+func (l *logger) DeleteStaticField(fields ...string) {
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
+
+	maps.DeleteFunc(l.staticFields, func(k string, v string) bool {
+		return slices.Contains(fields, k)
+	})
 }
 
 func (l *logger) SetReportQueueSize(size uint) {

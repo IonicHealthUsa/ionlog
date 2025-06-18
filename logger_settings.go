@@ -40,6 +40,14 @@ func WithStaticFields(attrs map[string]string) customAttrs {
 	}
 }
 
+// WithoutStaticFields remove the static fields for the logger.
+// Use the key of the static field to remove.
+func WithoutStaticFields(fields ...string) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().DeleteStaticField(fields...)
+	}
+}
+
 // WithLogFileRotation enables log file rotation,
 // specifying the directory where log files will be stored,
 // the maximum size of the log folder in bytes, and the rotation frequency.
