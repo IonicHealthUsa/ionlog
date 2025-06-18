@@ -19,6 +19,8 @@ type coreService struct {
 
 	logEngine       logengine.ILogger
 	rotationService IRotationService
+
+	serviceStatusLock sync.Mutex
 }
 
 type ICoreService interface {
@@ -91,9 +93,13 @@ func (c *coreService) Stop() {
 
 // Status returns the status of the logger service
 func (c *coreService) Status() ServiceStatus {
+	c.serviceStatusLock.Lock()
+	defer c.serviceStatusLock.Unlock()
 	return c.serviceStatus
 }
 
 func (c *coreService) setServiceStatus(status ServiceStatus) {
+	c.serviceStatusLock.Lock()
+	defer c.serviceStatusLock.Unlock()
 	c.serviceStatus = status
 }
