@@ -1,8 +1,11 @@
 package ionlog
 
 import (
+	"os"
+
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
+	"github.com/IonicHealthUsa/ionlog/internal/styles"
 )
 
 const (
@@ -21,3 +24,7 @@ const (
 const DefaultLogFolder = "logs"
 
 var logger = service.NewCoreService()
+
+var DefaultOutput = os.Stdout
+
+var CustomOutput = styles.CustomOutput
