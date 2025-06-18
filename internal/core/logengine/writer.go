@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sync"
 )
 
@@ -14,8 +15,8 @@ type ionWriter struct {
 
 type IWriter interface {
 	io.Writer
-	SetWriters(writers ...io.Writer)
-	AddWriter(writer io.Writer)
+	AddWriter(writer ...io.Writer)
+	DeleteWriter(writer ...io.Writer)
 }
 
 func NewWriter() IWriter {
@@ -44,14 +45,27 @@ func (i *ionWriter) Write(p []byte) (int, error) {
 	return 0, nil
 }
 
-func (i *ionWriter) SetWriters(writers ...io.Writer) {
+func (i *ionWriter) AddWriter(writer ...io.Writer) {
 	i.writeLock.Lock()
 	defer i.writeLock.Unlock()
-	i.writers = writers
+	i.writers = append(i.writers, writer...)
 }
 
-func (i *ionWriter) AddWriter(writer io.Writer) {
+func (i *ionWriter) DeleteWriter(writer ...io.Writer) {
 	i.writeLock.Lock()
 	defer i.writeLock.Unlock()
-	i.writers = append(i.writers, writer)
+
+	for _, wd := range writer {
+		isFind := false
+		for index, w := range i.writers {
+			if wd == w {
+				isFind = true
+				i.writers = slices.Delete(i.writers, index, index+1)
+				break
+			}
+		}
+		if !isFind {
+			fmt.Fprintf(os.Stderr, "writer with the pointer %q does not find", wd)
+		}
+	}
 }

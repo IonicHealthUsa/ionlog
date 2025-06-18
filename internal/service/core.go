@@ -40,6 +40,11 @@ func (c *coreService) LogEngine() logengine.ILogger {
 }
 
 func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation) {
+	if c.rotationService != nil {
+		c.LogEngine().Writer().DeleteWriter(c.rotationService.RotationEngine())
+		c.rotationService.Stop()
+	}
+
 	c.rotationService = NewRotationService(folder, maxFolderSize, rotation)
 	c.LogEngine().Writer().AddWriter(c.rotationService.RotationEngine())
 }

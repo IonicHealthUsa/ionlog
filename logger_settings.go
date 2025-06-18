@@ -21,7 +21,14 @@ func SetAttributes(fns ...customAttrs) {
 // every log will be written to these targets.
 func WithWriters(w ...io.Writer) customAttrs {
 	return func(i service.ICoreService) {
-		i.LogEngine().Writer().SetWriters(w...)
+		i.LogEngine().Writer().AddWriter(w...)
+	}
+}
+
+// WithoutWriters deletes the write targets for the logger.
+func WithoutWriters(w ...io.Writer) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().Writer().DeleteWriter(w...)
 	}
 }
 
