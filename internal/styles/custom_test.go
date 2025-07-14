@@ -20,23 +20,33 @@ func TestWrite(t *testing.T) {
 		CallerInfo: runtimeinfo.GetCallerInfo(1),
 	}
 
-	reportLog := fmt.Sprintf(`"time":"%s","level":"%s","msg":"%s","file":"%s","package":"%s","function":"%s","line":"%d"}
+	reportLog := fmt.Sprintf(`{"time":"%s","level":"%s","msg":"%s","file":"%s","package":"%s","function":"%s","line":"%d"}
 `, r.Time, r.Level, r.Msg, r.CallerInfo.File, r.CallerInfo.Package, r.CallerInfo.Function, r.CallerInfo.Line)
 
 	t.Run("should write slice of byte on stdout", func(t *testing.T) {
+		processedLog, err := processLogLine([]byte(reportLog))
+		if err != nil {
+			t.Errorf("expected no error, but got %q", err)
+		}
+
 		l, err := CustomOutput.Write([]byte(reportLog))
 		if err != nil {
 			t.Errorf("expected no error, but got %q", err)
 		}
-		if l != 0 {
-			t.Errorf("expected report log to be %q, but got %q", 0, l)
+		if l != len(processedLog) {
+			t.Errorf("expected report log to be %v, but got %v", len(processedLog), l)
 		}
 	})
 }
 
 func TestProcessLogline(t *testing.T) {
 	t.Run("should return nil when line is nil", func(t *testing.T) {
-		if format := processLogLine(nil); format != nil {
+		format, err := processLogLine(nil)
+		if err == nil {
+			t.Errorf("expected an error when line is nil, but got nil")
+		}
+
+		if format != nil {
 			t.Errorf("expected nil slice of byte, but got %q", format)
 		}
 	})
@@ -44,8 +54,13 @@ func TestProcessLogline(t *testing.T) {
 	t.Run("should return nil when could not decode the json", func(t *testing.T) {
 		line := []byte(`"key":"value"`)
 
-		if format := processLogLine(line); format != nil {
-			t.Errorf("expected nil slice of byte, but got %q", format)
+		log, err := processLogLine(line)
+		if err == nil {
+			t.Errorf("expected an error when decoding json, but got nil")
+		}
+
+		if log != nil {
+			t.Errorf("expected nil slice of byte, but got %q", log)
 		}
 	})
 
@@ -135,7 +150,10 @@ func TestProcessLogline(t *testing.T) {
 				tt.reportLog = fmt.Sprintf(`{"time":"%s","level":"%s","msg":"%s","file":"%s","package":"%s","function":"%s","line":"%d"}
 `, tt.report.Time, tt.report.Level, tt.report.Msg, tt.report.CallerInfo.File, tt.report.CallerInfo.Package, tt.report.CallerInfo.Function, tt.report.CallerInfo.Line)
 
-				gotLog := processLogLine([]byte(tt.reportLog))
+				gotLog, err := processLogLine([]byte(tt.reportLog))
+				if err != nil {
+					t.Errorf("expected no error, but got %q", err)
+				}
 
 				if !reflect.DeepEqual([]byte(tt.expectFormatLog), gotLog) {
 					t.Errorf("expected log to be %q, but got %q", tt.expectFormatLog, gotLog)
@@ -181,7 +199,10 @@ func TestProcessLogline(t *testing.T) {
 			staticField,
 		)
 
-		gotLog := processLogLine([]byte(reportLog))
+		gotLog, err := processLogLine([]byte(reportLog))
+		if err != nil {
+			t.Errorf("expected no error, but got %q", err)
+		}
 
 		if !reflect.DeepEqual([]byte(expectFormatLog), gotLog) {
 			t.Errorf("expected log to be %q, but got %q", expectFormatLog, gotLog)
@@ -207,7 +228,7 @@ func BenchmarkProcessLogLine(b *testing.B) {
 	b.ResetTimer()
 
 	for range b.N {
-		_ = processLogLine([]byte(reportLog))
+		_, _ = processLogLine([]byte(reportLog))
 	}
 }
 

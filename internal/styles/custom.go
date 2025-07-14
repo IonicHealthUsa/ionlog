@@ -33,7 +33,12 @@ const (
 )
 
 func (c *customWriter) Write(p []byte) (int, error) {
-	return os.Stdout.Write(processLogLine(p))
+	log, err := processLogLine(p)
+	if err != nil {
+		return 0, fmt.Errorf("failed to process log line: %w", err)
+	}
+
+	return os.Stdout.Write(log)
 }
 
 var (
@@ -42,16 +47,15 @@ var (
 
 var logEntryKeyDefault = []string{"time", "level", "msg", "file", "package", "function", "line"}
 
-func processLogLine(line []byte) []byte {
+func processLogLine(line []byte) ([]byte, error) {
 	if line == nil {
-		return nil
+		return nil, ErrNilLine
 	}
 
 	var entry logEntry
 	err := json.Unmarshal(line, &entry)
 	if err != nil {
-		fmt.Printf("%sErro '%s' ao processar linha: %s%s\n", yellow, err.Error(), line, reset)
-		return nil
+		return nil, err
 	}
 
 	timestamp := formatTimestamp(entry["time"])
@@ -74,7 +78,7 @@ func processLogLine(line []byte) []byte {
 		staticField,
 	)
 
-	return []byte(formatLine)
+	return []byte(formatLine), nil
 }
 
 func formatTimestamp(timeStr string) string {
