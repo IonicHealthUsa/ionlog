@@ -25,6 +25,11 @@ func Stop() {
 	logger = service.NewCoreService() // Reset the logger
 }
 
+// Flush flushes the reports to the output writers.
+func Flush() {
+	logger.LogEngine().FlushReports()
+}
+
 // Info logs a message with level info.
 func Info(msg string) {
 	logger.LogEngine().AsyncReport(
