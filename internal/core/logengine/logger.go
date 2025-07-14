@@ -3,7 +3,9 @@ package logengine
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -31,6 +33,7 @@ type logger struct {
 	traceMode    bool
 
 	reportLock sync.Mutex
+	closeLock  sync.Mutex
 }
 
 type ILogger interface {
@@ -41,6 +44,7 @@ type ILogger interface {
 	Writer() IWriter
 	Memory() memory.IRecordMemory
 	SetStaticFields(attrs map[string]string)
+	DeleteStaticField(fields ...string)
 	SetReportQueueSize(size uint)
 	SetTraceMode(mode bool)
 	TraceMode() bool
@@ -57,8 +61,20 @@ func NewLogger() ILogger {
 	return logger
 }
 
+func (l *logger) closeReport() {
+	l.closeLock.Lock()
+	defer l.closeLock.Unlock()
+	l.closed = true
+}
+
+func (l *logger) getStatusCloseReport() bool {
+	l.closeLock.Lock()
+	defer l.closeLock.Unlock()
+	return l.closed
+}
+
 func (l *logger) AsyncReport(r Report) {
-	if l.closed {
+	if l.getStatusCloseReport() {
 		return
 	}
 	select {
@@ -101,7 +117,7 @@ func (l *logger) HandleReports(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			l.closed = true
+			l.closeReport()
 			return
 
 		case r := <-l.reports:
@@ -119,17 +135,40 @@ func (l *logger) Memory() memory.IRecordMemory {
 }
 
 func (l *logger) SetStaticFields(attrs map[string]string) {
-	l.staticFields = attrs
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
+
+	if l.staticFields == nil {
+		l.staticFields = attrs
+		return
+	}
+
+	maps.Copy(l.staticFields, attrs)
+}
+
+func (l *logger) DeleteStaticField(fields ...string) {
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
+
+	maps.DeleteFunc(l.staticFields, func(k string, v string) bool {
+		return slices.Contains(fields, k)
+	})
 }
 
 func (l *logger) SetReportQueueSize(size uint) {
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
 	l.reports = make(chan Report, size)
 }
 
 func (l *logger) SetTraceMode(mode bool) {
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
 	l.traceMode = mode
 }
 
 func (l *logger) TraceMode() bool {
+	l.reportLock.Lock()
+	defer l.reportLock.Unlock()
 	return l.traceMode
 }

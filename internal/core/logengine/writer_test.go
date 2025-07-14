@@ -50,57 +50,6 @@ func TestNewWriter(t *testing.T) {
 	})
 }
 
-func TestSetWriters(t *testing.T) {
-	t.Run("Sets multiple writers", func(t *testing.T) {
-		w := NewWriter().(*ionWriter)
-		buf1 := &bytes.Buffer{}
-		buf2 := &bytes.Buffer{}
-
-		w.SetWriters(buf1, buf2)
-
-		if len(w.writers) != 2 {
-			t.Errorf("Expected 2 writers, got %d", len(w.writers))
-		}
-
-		if w.writers[0] != buf1 || w.writers[1] != buf2 {
-			t.Errorf("Writers not set correctly")
-		}
-	})
-
-	t.Run("Replaces existing writers", func(t *testing.T) {
-		w := NewWriter().(*ionWriter)
-		buf1 := &bytes.Buffer{}
-
-		// Set initial writers
-		w.SetWriters(&bytes.Buffer{}, &bytes.Buffer{})
-
-		// Replace with new writers
-		w.SetWriters(buf1)
-
-		if len(w.writers) != 1 {
-			t.Errorf("Expected 1 writer after replacement, got %d", len(w.writers))
-		}
-
-		if w.writers[0] != buf1 {
-			t.Errorf("Writers not replaced correctly")
-		}
-	})
-
-	t.Run("Sets empty writers slice", func(t *testing.T) {
-		w := NewWriter().(*ionWriter)
-
-		// Set initial writers
-		w.SetWriters(&bytes.Buffer{}, &bytes.Buffer{})
-
-		// Replace with empty slice
-		w.SetWriters()
-
-		if len(w.writers) != 0 {
-			t.Errorf("Expected empty writers slice, got %d writers", len(w.writers))
-		}
-	})
-}
-
 func TestAddWriter(t *testing.T) {
 	t.Run("Adds writer to empty slice", func(t *testing.T) {
 		w := NewWriter().(*ionWriter)
@@ -114,6 +63,22 @@ func TestAddWriter(t *testing.T) {
 
 		if w.writers[0] != buf {
 			t.Errorf("Writer not added correctly")
+		}
+	})
+
+	t.Run("Adds two writers to empty slice", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf1 := &bytes.Buffer{}
+		buf2 := &bytes.Buffer{}
+
+		w.AddWriter(buf1, buf2)
+
+		if len(w.writers) != 2 {
+			t.Errorf("Expected 2 writer, got %d", len(w.writers))
+		}
+
+		if w.writers[0] != buf1 || w.writers[1] != buf2 {
+			t.Errorf("Writers not added correctly")
 		}
 	})
 
@@ -133,6 +98,129 @@ func TestAddWriter(t *testing.T) {
 			t.Errorf("Writers not added correctly")
 		}
 	})
+
+	t.Run("Adds two writer to existing writers", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf1 := &bytes.Buffer{}
+		buf2 := &bytes.Buffer{}
+		buf3 := &bytes.Buffer{}
+
+		w.AddWriter(buf1)
+		w.AddWriter(buf2, buf3)
+
+		if len(w.writers) != 3 {
+			t.Errorf("Expected 3 writers, but got %d", len(w.writers))
+		}
+
+		if w.writers[0] != buf1 || w.writers[1] != buf2 || w.writers[2] != buf3 {
+			t.Error("Writers not added correctly")
+		}
+	})
+
+	t.Run("should timeout when mutex is lock", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf := &bytes.Buffer{}
+
+		w.writeLock.Lock()
+		go func() {
+			w.AddWriter(buf)
+		}()
+		time.Sleep(10 * time.Millisecond)
+
+		if len(w.writers) != 0 {
+			t.Errorf("expected empty writers slice, but got %q writers", len(w.writers))
+		}
+
+		w.writeLock.Unlock()
+		time.Sleep(10 * time.Millisecond)
+		w.writeLock.Lock()
+		if len(w.writers) != 1 {
+			t.Errorf("expected one writer slice, but got %q writers", len(w.writers))
+		}
+
+		if w.writers[0] != buf {
+			t.Errorf("writers not replaced correctly")
+		}
+		w.writeLock.Unlock()
+	})
+}
+
+func TestDeleteWriter(t *testing.T) {
+	t.Run("should delete a writer on the list", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf1 := &bytes.Buffer{}
+		buf2 := &bytes.Buffer{}
+
+		w.writers = append(w.writers, buf1, buf2)
+
+		if len(w.writers) != 2 {
+			t.Errorf("expected the size of writers to be 2, but got %q", len(w.writers))
+		}
+
+		if w.writers[0] != buf1 || w.writers[1] != buf2 {
+			t.Errorf("Writers not added correctly")
+			return
+		}
+
+		w.DeleteWriter(buf2)
+
+		if len(w.writers) != 1 {
+			t.Errorf("expected the size of writers to be 1, but got %q", len(w.writers))
+		}
+
+		w.DeleteWriter(buf1)
+
+		if len(w.writers) != 0 {
+			t.Errorf("expected the size of writers to be 0, but got %q", len(w.writers))
+		}
+	})
+
+	t.Run("should delete all writer on the list", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf1 := &bytes.Buffer{}
+		buf2 := &bytes.Buffer{}
+
+		w.writers = append(w.writers, buf1, buf2)
+
+		if len(w.writers) != 2 {
+			t.Errorf("expected the size of writers to be 2, but got %q", len(w.writers))
+		}
+
+		if w.writers[0] != buf1 || w.writers[1] != buf2 {
+			t.Errorf("Writers not added correctly")
+			return
+		}
+
+		w.DeleteWriter(buf1, buf2)
+
+		if len(w.writers) != 0 {
+			t.Errorf("expected the size of writers to be 0, but got %d", len(w.writers))
+		}
+	})
+
+	t.Run("should not delete anyone writers on the list", func(t *testing.T) {
+		w := NewWriter().(*ionWriter)
+		buf1 := &bytes.Buffer{}
+		buf2 := &bytes.Buffer{}
+		buf3 := &bytes.Buffer{}
+
+		w.writers = append(w.writers, buf1, buf2)
+
+		if len(w.writers) != 2 {
+			t.Errorf("expected the size of writers to be 2, but got %q", len(w.writers))
+		}
+
+		if w.writers[0] != buf1 || w.writers[1] != buf2 {
+			t.Errorf("Writers not added correctly")
+			return
+		}
+
+		w.DeleteWriter(buf3)
+
+		if len(w.writers) != 2 {
+			t.Errorf("expected the size of writers to be 0, but got %d", len(w.writers))
+		}
+	})
 }
 
 func TestWrite(t *testing.T) {
@@ -145,7 +233,7 @@ func TestWrite(t *testing.T) {
 		buf1 := &bytes.Buffer{}
 		buf2 := &bytes.Buffer{}
 
-		w.SetWriters(buf1, buf2)
+		w.AddWriter(buf1, buf2)
 
 		testData := []byte("test data")
 		n, err := w.Write(testData)
@@ -175,7 +263,7 @@ func TestWrite(t *testing.T) {
 		buf := &bytes.Buffer{}
 		errWriter := &ErrorWriter{Err: errors.New("write error")}
 
-		writer.SetWriters(buf, errWriter)
+		writer.AddWriter(buf, errWriter)
 
 		testData := []byte("test data")
 		_, _ = writer.Write(testData)
@@ -206,7 +294,7 @@ func TestWrite(t *testing.T) {
 		buf := &bytes.Buffer{}
 
 		// Set a nil writer
-		writer.SetWriters(buf, nil)
+		writer.AddWriter(buf, nil)
 
 		testData := []byte("test data")
 		_, _ = writer.Write(testData)
@@ -256,7 +344,7 @@ func TestWrite(t *testing.T) {
 			},
 		}
 
-		w.SetWriters(normalWriter, blockingWriter)
+		w.AddWriter(normalWriter, blockingWriter)
 
 		go func() {
 			w.Write([]byte("test1")) // blocked by second write

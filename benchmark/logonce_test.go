@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkLogOnceNoChange(b *testing.B) {
-	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
+	ionlog.SetAttributes(ionlog.WithQueueSize(1000))
 	ionlog.Start()
 	defer ionlog.Stop()
 
@@ -64,7 +64,7 @@ func BenchmarkLogOnceNoChange(b *testing.B) {
 }
 
 func BenchmarkLogOnceWithChange(b *testing.B) {
-	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
+	ionlog.SetAttributes(ionlog.WithQueueSize(1000))
 	ionlog.Start()
 	defer ionlog.Stop()
 
@@ -118,7 +118,7 @@ func BenchmarkLogOnceWithChange(b *testing.B) {
 }
 
 func BenchmarkLogOnceNoChangeParallel(b *testing.B) {
-	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
+	ionlog.SetAttributes(ionlog.WithQueueSize(1000))
 	ionlog.Start()
 	defer ionlog.Stop()
 
@@ -188,7 +188,7 @@ func BenchmarkLogOnceNoChangeParallel(b *testing.B) {
 }
 
 func BenchmarkLogOnceWithChangeParallel(b *testing.B) {
-	ionlog.SetAttributes(ionlog.SetQueueSize(1000))
+	ionlog.SetAttributes(ionlog.WithQueueSize(1000))
 	ionlog.Start()
 	defer ionlog.Stop()
 

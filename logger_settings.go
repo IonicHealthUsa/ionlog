@@ -1,9 +1,7 @@
 package ionlog
 
 import (
-	"fmt"
 	"io"
-	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
@@ -14,20 +12,23 @@ type customAttrs func(i service.ICoreService)
 // SetAttributes sets the log SetAttributes
 // fns is a variadic parameter that accepts customAttrs
 func SetAttributes(fns ...customAttrs) {
-	if logger.Status() == service.Running {
-		fmt.Fprint(os.Stderr, "Logger is already running, cannot set attributes\n")
-		return
-	}
-
 	for _, fn := range fns {
 		fn(logger)
 	}
 }
 
-// WithWriters sets the write targets for the logger, every log will be written to these targets.
+// WithWriters sets the write targets for the logger,
+// every log will be written to these targets.
 func WithWriters(w ...io.Writer) customAttrs {
 	return func(i service.ICoreService) {
-		i.LogEngine().Writer().SetWriters(w...)
+		i.LogEngine().Writer().AddWriter(w...)
+	}
+}
+
+// WithoutWriters deletes the write targets for the logger.
+func WithoutWriters(w ...io.Writer) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().Writer().DeleteWriter(w...)
 	}
 }
 
@@ -39,20 +40,39 @@ func WithStaticFields(attrs map[string]string) customAttrs {
 	}
 }
 
-// WithLogFileRotation enables log file rotation, specifying the directory where log files will be stored, the maximum size of the log folder in bytes, and the rotation frequency.
-func WithLogFileRotation(folder string, folderMaxSize uint, period rotationengine.PeriodicRotation) customAttrs {
+// WithoutStaticFields remove the static fields for the logger.
+// Use the key of the static field to remove.
+func WithoutStaticFields(fields ...string) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().DeleteStaticField(fields...)
+	}
+}
+
+// WithLogFileRotation enables log file rotation,
+// specifying the directory where log files will be stored,
+// the maximum size of the log folder in bytes, and the rotation frequency.
+func WithLogFileRotation(
+	folder string,
+	folderMaxSize uint,
+	period rotationengine.PeriodicRotation,
+) customAttrs {
 	return func(i service.ICoreService) {
 		i.CreateRotationService(folder, folderMaxSize, period)
 	}
 }
 
-func SetQueueSize(size uint) customAttrs {
+// WithQueueSize sets the size of the reports queue,
+// which stores logs before sending them to a file descriptor.
+func WithQueueSize(size uint) customAttrs {
 	return func(i service.ICoreService) {
 		i.LogEngine().SetReportQueueSize(size)
 	}
 }
 
-func SetTraceMode(mode bool) customAttrs {
+// WithTraceMode enables trace log mode.
+// For default, the trace mode is disable,
+// to enable is need pass a true boolean.
+func WithTraceMode(mode bool) customAttrs {
 	return func(i service.ICoreService) {
 		i.LogEngine().SetTraceMode(mode)
 	}

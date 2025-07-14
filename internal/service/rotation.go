@@ -18,6 +18,8 @@ type rotationService struct {
 	serviceStatus ServiceStatus
 
 	rotationEngine rotationengine.IRotationEngine
+
+	serviceStatusLock sync.Mutex
 }
 
 type IRotationService interface {
@@ -75,9 +77,13 @@ func (r *rotationService) Stop() {
 }
 
 func (r *rotationService) Status() ServiceStatus {
+	r.serviceStatusLock.Lock()
+	defer r.serviceStatusLock.Unlock()
 	return r.serviceStatus
 }
 
 func (r *rotationService) setServiceStatus(status ServiceStatus) {
+	r.serviceStatusLock.Lock()
+	defer r.serviceStatusLock.Unlock()
 	r.serviceStatus = status
 }
