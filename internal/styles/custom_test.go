@@ -13,7 +13,7 @@ import (
 )
 
 func TestWrite(t *testing.T) {
-	r := logengine.Report{
+	r := logengine.ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      logengine.Info,
 		Msg:        "Hello World",
@@ -66,12 +66,12 @@ func TestProcessLogline(t *testing.T) {
 
 	t.Run("should return the correct format for each level type", func(t *testing.T) {
 		testCase := [...]struct {
-			report          logengine.Report
+			report          logengine.ReportType
 			reportLog       string
 			expectFormatLog string
 		}{
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Debug,
 					Msg:        "Hello World",
@@ -79,7 +79,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Info,
 					Msg:        "Hello World",
@@ -87,7 +87,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Warn,
 					Msg:        "Hello World",
@@ -95,7 +95,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Error,
 					Msg:        "Hello World",
@@ -103,7 +103,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Fatal,
 					Msg:        "Hello World",
@@ -111,7 +111,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Panic,
 					Msg:        "Hello World",
@@ -119,7 +119,7 @@ func TestProcessLogline(t *testing.T) {
 				},
 			},
 			{
-				report: logengine.Report{
+				report: logengine.ReportType{
 					Time:       time.Now().Format(time.RFC3339),
 					Level:      logengine.Trace,
 					Msg:        "Hello World",
@@ -163,7 +163,7 @@ func TestProcessLogline(t *testing.T) {
 	})
 
 	t.Run("should return the correct format with static fields", func(t *testing.T) {
-		report := logengine.Report{
+		report := logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Info,
 			Msg:        "Hello World",
@@ -211,7 +211,7 @@ func TestProcessLogline(t *testing.T) {
 }
 
 func BenchmarkProcessLogLine(b *testing.B) {
-	report := logengine.Report{
+	report := logengine.ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      logengine.Info,
 		Msg:        "Hello World",

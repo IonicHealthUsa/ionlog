@@ -15,7 +15,7 @@ import (
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/memory"
 )
 
-type Report struct {
+type ReportType struct {
 	Time       string
 	Level      Level
 	Msg        string
@@ -26,7 +26,7 @@ type logger struct {
 	builder    logbuilder.ILogBuilder
 	logsMemory memory.IRecordMemory
 	closed     bool
-	reports    chan Report
+	reports    chan ReportType
 	writer     IWriter
 
 	staticFields map[string]string
@@ -37,8 +37,8 @@ type logger struct {
 }
 
 type ILogger interface {
-	AsyncReport(r Report)
-	Report(r Report)
+	AsyncReport(r ReportType)
+	Report(r ReportType)
 	FlushReports()
 	HandleReports(ctx context.Context)
 	Writer() IWriter
@@ -55,7 +55,7 @@ func NewLogger() ILogger {
 
 	logger.builder = logbuilder.NewLogBuilder()
 	logger.logsMemory = memory.NewRecordMemory()
-	logger.reports = make(chan Report, 100)
+	logger.reports = make(chan ReportType, 100)
 	logger.writer = NewWriter()
 
 	return logger
@@ -73,7 +73,7 @@ func (l *logger) getStatusCloseReport() bool {
 	return l.closed
 }
 
-func (l *logger) AsyncReport(r Report) {
+func (l *logger) AsyncReport(r ReportType) {
 	if l.getStatusCloseReport() {
 		return
 	}
@@ -84,7 +84,7 @@ func (l *logger) AsyncReport(r Report) {
 	}
 }
 
-func (l *logger) Report(r Report) {
+func (l *logger) Report(r ReportType) {
 	l.reportLock.Lock()
 	defer l.reportLock.Unlock()
 
@@ -158,7 +158,7 @@ func (l *logger) DeleteStaticField(fields ...string) {
 func (l *logger) SetReportQueueSize(size uint) {
 	l.reportLock.Lock()
 	defer l.reportLock.Unlock()
-	l.reports = make(chan Report, size)
+	l.reports = make(chan ReportType, size)
 }
 
 func (l *logger) SetTraceMode(mode bool) {

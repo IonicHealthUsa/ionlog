@@ -154,7 +154,7 @@ func (m *mockBufferWriter) Len() int {
 }
 
 func TestStart_Core(t *testing.T) {
-	r := logengine.Report{
+	r := logengine.ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      logengine.Info,
 		Msg:        "Hello World",

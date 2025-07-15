@@ -150,7 +150,7 @@ func TestGetStatusCloseReport(t *testing.T) {
 }
 
 func TestAsyncReport(t *testing.T) {
-	r := Report{
+	r := ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      Info,
 		Msg:        "Hello World",
@@ -217,7 +217,7 @@ func TestAsyncReport(t *testing.T) {
 		if !ok {
 			t.Fatalf("NewLogger did not returned a instance of logger")
 		}
-		_l.reports = make(chan Report)
+		_l.reports = make(chan ReportType)
 
 		l.AsyncReport(r)
 
@@ -247,7 +247,7 @@ func (m *mockBufferWriter) String() string {
 }
 
 func TestReport(t *testing.T) {
-	r := Report{
+	r := ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      Info,
 		Msg:        "Hello World",
@@ -332,7 +332,7 @@ func TestReport(t *testing.T) {
 }
 
 func TestFlushReports(t *testing.T) {
-	r := Report{
+	r := ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      Info,
 		Msg:        "Hello World",
@@ -380,7 +380,7 @@ func TestFlushReports(t *testing.T) {
 }
 
 func TestHandleReports(t *testing.T) {
-	r := Report{
+	r := ReportType{
 		Time:       time.Now().Format(time.RFC3339),
 		Level:      Info,
 		Msg:        "Hello World",

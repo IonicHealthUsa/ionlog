@@ -33,7 +33,7 @@ func Flush() {
 // Info logs a message with level info.
 func Info(msg string) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Info,
 			Msg:        msg,
@@ -46,7 +46,7 @@ func Info(msg string) {
 // Arguments are handled in the manner of fmt.Printf.
 func Infof(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Info,
 			Msg:        fmt.Sprintf(msg, args...),
@@ -58,7 +58,7 @@ func Infof(msg string, args ...any) {
 // Error logs a message with level error.
 func Error(msg string) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Error,
 			Msg:        msg,
@@ -71,7 +71,7 @@ func Error(msg string) {
 // Arguments are handled in the manner of fmt.Printf.
 func Errorf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Error,
 			Msg:        fmt.Sprintf(msg, args...),
@@ -83,7 +83,7 @@ func Errorf(msg string, args ...any) {
 // Warn logs a message with level warn.
 func Warn(msg string) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Warn,
 			Msg:        msg,
@@ -96,7 +96,7 @@ func Warn(msg string) {
 // Arguments are handled in the manner of fmt.Printf.
 func Warnf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Warn,
 			Msg:        fmt.Sprintf(msg, args...),
@@ -108,7 +108,7 @@ func Warnf(msg string, args ...any) {
 // Debug logs a message with level debug.
 func Debug(msg string) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Debug,
 			Msg:        msg,
@@ -121,7 +121,7 @@ func Debug(msg string) {
 // Arguments are handled in the manner of fmt.Printf.
 func Debugf(msg string, args ...any) {
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Debug,
 			Msg:        fmt.Sprintf(msg, args...),
@@ -136,7 +136,7 @@ func Trace(msg string) {
 		return
 	}
 	logger.LogEngine().Report(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Trace,
 			Msg:        msg,
@@ -152,7 +152,7 @@ func Tracef(msg string, args ...any) {
 		return
 	}
 	logger.LogEngine().Report(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Trace,
 			Msg:        fmt.Sprintf(msg, args...),
@@ -226,7 +226,7 @@ func logOnce(level logengine.Level, recordMsg string) {
 	}
 
 	logger.LogEngine().AsyncReport(
-		logengine.Report{
+		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      level,
 			Msg:        recordMsg,
