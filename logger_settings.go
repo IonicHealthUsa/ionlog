@@ -12,7 +12,8 @@ type customAttrs func(i service.ICoreService)
 // SetAttributes sets the log SetAttributes
 // fns is a variadic parameter that accepts customAttrs
 func SetAttributes(fns ...customAttrs) {
-	logger.LogEngine().FlushReports()
+	Flush()
+
 	for _, fn := range fns {
 		fn(logger)
 	}

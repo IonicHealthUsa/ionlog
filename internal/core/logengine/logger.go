@@ -108,8 +108,14 @@ func (l *logger) Report(r ReportType) {
 }
 
 func (l *logger) FlushReports() {
-	for len(l.reports) > 0 {
-		l.Report(<-l.reports)
+	for {
+		select {
+		case r := <-l.reports:
+			l.Report(r)
+
+		case <-time.After(1 * time.Millisecond):
+			return
+		}
 	}
 }
 
