@@ -104,7 +104,7 @@ func (l *logger) Report(r Report) {
 		"line", strconv.Itoa(r.CallerInfo.Line),
 	)
 
-	l.writer.Write(l.builder.Compile())
+	_, _ = l.writer.Write(l.builder.Compile())
 }
 
 func (l *logger) FlushReports() {
