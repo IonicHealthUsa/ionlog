@@ -1,18 +1,30 @@
 package ionlog
 
 import (
-	"io"
+	"os"
 
-	ioncore "github.com/IonicHealthUsa/ionlog/internal/logcore"
+	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/service"
+	"github.com/IonicHealthUsa/ionlog/internal/styles"
 )
 
 const (
-	Kibibyte = 1024
-	Mebibyte = 1024 * Kibibyte
-	Gibibyte = 1024 * Mebibyte
+	Daily   = rotationengine.Daily
+	Weekly  = rotationengine.Weekly
+	Monthly = rotationengine.Monthly
 )
 
-// DefaultOutput returns the standard output (stdout)
-func DefaultOutput() io.Writer {
-	return ioncore.DefaultOutput
-}
+const (
+	NoMaxFolderSize uint = rotationengine.NoMaxFolderSize
+	Kibibyte        uint = 1024
+	Mebibyte        uint = 1024 * Kibibyte
+	Gibibyte        uint = 1024 * Mebibyte
+)
+
+const DefaultLogFolder = "logs"
+
+var logger = service.NewCoreService()
+
+var DefaultOutput = os.Stdout
+
+var CustomOutput = styles.CustomOutput

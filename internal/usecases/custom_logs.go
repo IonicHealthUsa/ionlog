@@ -2,53 +2,27 @@ package usecases
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/memory"
 )
 
-// LogOnce allows logging only once per application execution.
-// It returns true if it is the first time the message is logged.
-// Otherwise, it returns false.
-func LogOnce(
-	logHistory memory.IRecordHistory,
-	pkg string,
-	function string,
-	file string,
-	line int,
-	msg string,
-) bool {
-	id := memory.GenHash(fmt.Sprintf("%s%s%s%d", pkg, function, file, line))
+func LogOnce(logsMemory memory.IRecordMemory, msg string, args ...string) bool {
+	id := memory.GenHash(fmt.Sprintf("%s%s%s", args[0], args[1], args[2]))
 
-	if logHistory.GetRecord(id) != nil {
-		return false
-	}
-
-	logHistory.AddRecord(id, msg, memory.LogOnce)
-	return true
-}
-
-// LogOnChange allows logging only when the message changes.
-// It returns true if the message has changed. Otherwise, it returns false.
-func LogOnChange(
-	logHistory memory.IRecordHistory,
-	pkg string,
-	function string,
-	file string,
-	line int,
-	msg string,
-) bool {
-	id := memory.GenHash(fmt.Sprintf("%s%s%s%d", pkg, function, file, line))
-
-	rec := logHistory.GetRecord(id)
+	rec := logsMemory.GetRecord(id)
 	if rec == nil {
-		logHistory.AddRecord(id, msg, memory.LogOnChange)
+		err := logsMemory.AddRecord(id, msg)
+		if err != nil {
+			fmt.Fprint(os.Stderr, "Failed to add record to memory\n")
+		}
 		return true
 	}
 
 	msgHash := memory.GenHash(msg)
 
-	if rec.MsgHash != msgHash {
-		rec.MsgHash = msgHash
+	if rec.GetMsgHash() != msgHash {
+		rec.SetMsgHash(msgHash)
 		return true
 	}
 

@@ -15,16 +15,31 @@ package main
 import "github.com/IonicHealthUsa/ionlog"
 
 func main() {
-    ionlog.SetLogAttributes(
-        ionlog.WithTargets(ionlog.DefaultOutput()), // Log to console
-        ionlog.WithStaticFields(map[string]string{"service": "my-app"}),
-        ionlog.WithLogFileRotation("logs", 10*ionlog.Mebibyte, ionlog.Daily),
-    )
+	appInfo := map[string]string{
+		"app":     "Basic Usage",
+		"version": "1.0.0",
+		"env":     "test",
+	}
 
-    ionlog.Start()
-    defer ionlog.Stop()
+	ionlog.SetAttributes(
+		ionlog.WithStaticFields(appInfo),
+		ionlog.WithWriters(ionlog.CustomOutput),
+	)
 
-    ionlog.Info("Application started")
+	ionlog.Start()
+	defer ionlog.Stop()
+
+	// These logs are async
+	ionlog.Infof("Test version: %v", appInfo["version"])
+	ionlog.Debugf("This is a debug message: %v", "some debug info")
+	ionlog.Warnf("This is a warning message: %v", "some warning info")
+	ionlog.Errorf("This is an error message: %v", "some error info")
+
+	// optional: you can turn on trace logging
+	ionlog.SetAttributes(ionlog.WithTraceMode(true))
+
+	// Trace is a sync log
+	ionlog.Tracef("This is a trace message: %v", "some trace info")
 }
 ```
 
@@ -32,89 +47,126 @@ func main() {
 ```go
 package main
 
-import (
-	"github.com/IonicHealthUsa/ionlog"
-)
+import "github.com/IonicHealthUsa/ionlog"
 
 func main() {
-	// Set the log attributes, and other configurations
-	ionlog.SetLogAttributes(
-		// WithTargets sets the write targets for the logger, every log will be written
-		// to these targets.
-		ionlog.WithTargets(
-			ionlog.DefaultOutput(),
-			// a websocket
-			// a file
-			// your custom writer
-		),
+	appInfo := map[string]string{
+		"app":     "Basic Usage",
+		"version": "1.0.0",
+		"env":     "test",
+	}
 
-		// (Optional) WithStaticFields sets the static fields for the logger, every log will have these fields.
-		ionlog.WithStaticFields(map[string]string{
-			"computer-id": "1234",
-			// your custom fields
-		}),
-
-		// (Optional) WithLogFileRotation enables log file rotation, specifying the directory where log files will be stored, the maximum size of the log folder in bytes, and the rotation frequency.
-		// This internal log rotation system appends the log file to the specified targets and automatically rotates logs based on the provided configuration,
-		// ensuring the total size of the log folder does not exceed the specified maximum (e.g., 10MB in this case).
-		ionlog.WithLogFileRotation("logs", 10*ionlog.Mebibyte, ionlog.Daily),
+	ionlog.SetAttributes(
+		ionlog.WithStaticFields(appInfo),
+		ionlog.WithWriters(ionlog.DefaultOutput),
+		// ionlog.WithLogFileRotation(ionlog.DefaultLogFolder, 1*ionlog.Mebibyte, ionlog.Daily),
+		ionlog.WithQueueSize(10),
 	)
 
-	// Start the logger service
 	ionlog.Start()
-
-	// Stops the logger service when the main function ends
 	defer ionlog.Stop()
 
-	// output: {"time":"2024-12-06T20:59:47.252944832-03:00","level":"INFO","msg":"This log level is: info","computer-id":"1234","package":"main","function":"main","file":"main.go","line":38}
-	ionlog.Infof("This log level is: %v", "info")
-	ionlog.Errorf("This log level is: %v", "error")
-	ionlog.Warnf("This log level is: %v", "warn")
-	ionlog.Debugf("This log level is: %v", "debug")
+	// These logs are async
+	ionlog.Infof("Test version: %v", appInfo["version"])
+	ionlog.Debugf("This is a debug message: %v", "some debug info")
+	ionlog.Warnf("This is a warning message: %v", "some warning info")
+	ionlog.Errorf("This is an error message: %v", "some error info")
 
-	ionlog.Info("This log level is a simple info log")
-	ionlog.Error("This log level is a simple error log")
-	ionlog.Warn("This log level is a simple warn log")
-	ionlog.Debug("This log level is a simple debug log")
+	// optional: you can turn on trace logging
+	ionlog.SetAttributes(ionlog.WithTraceMode(true))
 
-	status := "NOT OK"
-	for i := 0; i < 10; i++ {
-		ionlog.LogOnceInfo("Process Started!")   // This will be logged only once
-		ionlog.LogOnChangeDebugf("count: %v", i) // Log every time i changes
-		if i == 5 {
-			status = "OK"
-		}
-		ionlog.LogOnChangeInfof("status: %v", status) // Log once "NOT OK", log once "OK"
-	}
+	// Trace is a sync log
+	ionlog.Tracef("This is a trace message: %v", "some trace info")
+
+	// Turn off trace mode
+	ionlog.SetAttributes(ionlog.WithTraceMode(false))
+
+	// Add CustomOutput to wrtiters, this will be the colorful logging in the terminal.
+	ionlog.SetAttributes(ionlog.WithWriters(ionlog.CustomOutput))
+	ionlog.Info("This is a log with color")
+
+	ionlog.SetAttributes(ionlog.WithoutWriters(ionlog.CustomOutput))
+	ionlog.Info("This is a log without color, it will be written to the default output")
+
+	// Add a static field
+	ID := "0xABC123"
+	ionlog.SetAttributes(ionlog.WithStaticFields(map[string]string{"id": ID}))
+	ionlog.Infof("This log has a static field: %s", ID)
+
+	// Remove the static field
+	ionlog.SetAttributes(ionlog.WithoutStaticFields("id"))
+	ionlog.Info("This log does not have the static field 'id' anymore")
 }
 ```
 
 # Key Features
 ## Configuration Options
 
-### Targets: Log to multiple destinations (console, files, websockets, custom writers).
+### Add a writers: Log to multiple destinations (console, files, websockets, custom writers).
 ```go
-ionlog.WithTargets(ionlog.DefaultOutput(), myCustomWriter)
+ionlog.SetAttributes(
+    ionlog.WithWriters(ionlog.DefaultOutput, ionlog.CustomOutput, ...),
+)
+```
+
+### Remove a writer: Remove the writer by its reference.
+```go
+ionlog.SetAttributes(
+    ionlog.WithoutWriters(ionlog.CustomOutput, ...),
+)
 ```
 
 ### Static Fields: Add fixed fields to all logs (e.g., service name, environment).
 ```go
-ionlog.WithStaticFields(map[string]string{"env": "production"})
+fields := map[string]string{"service-id": "0xcafe"}
+ionlog.SetAttributes(
+    ionlog.WithStaticFields(fields),
+)
+```
+
+### Static Fields: Remove the static fields.
+```go
+ionlog.SetAttributes(
+    ionlog.WithoutStaticFields("service-id"),
+)
 ```
 
 ### Log Rotation: Auto-rotate logs by size and time.
 ```go
-ionlog.WithLogFileRotation("logs", 100*ionlog.Mebibyte, ionlog.Hourly)
+ionlog.SetAttributes(
+    ionlog.WithLogFileRotation("logs", 100*ionlog.Mebibyte, ionlog.Hourly),
+)
+```
+
+### Report Size: sets the size pf reports queue.
+```go
+ionlog.SetAttributes(
+    ionlog.WithQueueSize(200),
+)
+```
+
+### Trace: enable or disable the trace mode.
+```go
+ionlog.SetAttributes(
+    ionlog.WithTraceMode(true), // or false to disable
+)
 ```
 
 ## Logging Functions
 - Levels: Debug, Info, Warn, Error.
 ```go
+ionlog.Debug("Debugging information")
 ionlog.Infof("User %s logged in", "Alice")
+ionlog.Warn("Low disk space warning")
 ionlog.Error("Connection failed")
 ```
 
-## Structured Output: Logs are emitted as JSON with metadata:
+- The trace level is optional. It is necessary to enable.
+```go
+ionlog.Trace("Trace the path")
+```
+
+## Structured Output: Logs are emitted as JSON with metadata ("serivce-id" is an example of static fields):
 ```json
 {
 	"time":"2024-12-06T20:59:47.252944832-03:00",
@@ -130,27 +182,25 @@ ionlog.Error("Connection failed")
 
 ## Special Logging
 
-### Log Once: Write a message only once during execution.
+### Log Once: Write a message only once during execution (levels: Debug, Info, Warn, Error).
 ```go
 ionlog.LogOnceInfo("Initialization complete")
-```
-
-### Log on Change: Only log when the value changes.
-```go
-status := "STARTING"
-ionlog.LogOnChangeInfof("status: %s", status) // Logs once
-ionlog.LogOnChangeInfof("status: %s", status) // Will not log
-
-status = "RUNNING"
-ionlog.LogOnChangeInfof("status: %s", status) // Logs again
-ionlog.LogOnChangeInfof("status: %s", status) // Will not log
 ```
 
 ## Lifecycle Management:
 
 - Start() initializes the logger
-- Stop() closes the logger when the program ends
+```go
+ionlog.Start()
+```
 
+- Stop() ends the logger service, flushing any pending logs and reset the log instance.
+```go
+ionlog.Stop()
+```
 
-# Internal Logging system:
-- Internal logs are handled by the slog package, and outputed to the os.Stdout by default.
+# Process Flow Diagram
+TODO
+<!-- ```mermaid -->
+<!---->
+<!-- ``` -->

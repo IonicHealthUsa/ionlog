@@ -1,5 +1,4 @@
 // Package memory provides a way to keep track of the log history.
-// It allows custom logging modes, such as logOnce and logOnChange.
 package memory
 
 import (
@@ -9,79 +8,89 @@ import (
 	"github.com/cespare/xxhash"
 )
 
-type RecordMode uint8
-
-type RecordUnity struct {
+type recordUnity struct {
 	MsgHash uint64
-	Mode    RecordMode
 }
 
-type RecordHistory struct {
-	Records map[uint64]*RecordUnity
+type recordMemory struct {
+	records map[uint64]*recordUnity
 	mu      sync.Mutex
 }
 
-type IRecordHistory interface {
-	AddRecord(id uint64, msg string, mode RecordMode) error
-	RemoveRecord(id uint64)
-	GetRecord(id uint64) *RecordUnity
+type IRecordUnity interface {
+	GetMsgHash() uint64
+	SetMsgHash(msg uint64)
 }
 
-const (
-	LogOnce RecordMode = iota
-	LogOnChange
-)
+type IRecordMemory interface {
+	AddRecord(id uint64, msg string) error
+	RemoveRecord(id uint64)
+	GetRecord(id uint64) IRecordUnity
+}
 
-func NewRecordHistory() IRecordHistory {
-	return &RecordHistory{
-		Records: make(map[uint64]*RecordUnity),
+func NewRecordMemory() IRecordMemory {
+	return &recordMemory{
+		records: make(map[uint64]*recordUnity),
 	}
+}
+
+func (r recordUnity) GetMsgHash() uint64 {
+	return r.MsgHash
+}
+
+func (r *recordUnity) SetMsgHash(msg uint64) {
+	r.MsgHash = msg
 }
 
 func GenHash(s string) uint64 {
 	return xxhash.Sum64String(s)
 }
 
-func (r *RecordHistory) AddRecord(id uint64, msg string, mode RecordMode) error {
-	if r.GetRecord(id) != nil {
+func (r *recordMemory) AddRecord(id uint64, msg string) error {
+	if r.readRecord(id) != nil {
 		return ErrRecordIDCollision
 	}
 	r.writeRecord(
 		id,
-		&RecordUnity{
+		&recordUnity{
 			MsgHash: GenHash(msg),
-			Mode:    mode,
 		},
 	)
 	return nil
 }
 
-func (r *RecordHistory) RemoveRecord(id uint64) {
+func (r *recordMemory) RemoveRecord(id uint64) {
 	if r.GetRecord(id) == nil {
 		slog.Debug("Trying to remove non-existing record")
+		return
 	}
 	r.deleteRecord(id)
 }
 
-func (r *RecordHistory) GetRecord(id uint64) *RecordUnity {
+func (r *recordMemory) GetRecord(id uint64) IRecordUnity {
 	record := r.readRecord(id)
+	if record == nil {
+		// accessed in 21/03/2025:
+		// check: https://trstringer.com/go-nil-interface-and-interface-with-nil-concrete-value/
+		return nil // yeah, it have to be like this.
+	}
 	return record
 }
 
-func (r *RecordHistory) readRecord(id uint64) *RecordUnity {
+func (r *recordMemory) readRecord(id uint64) *recordUnity {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.Records[id]
+	return r.records[id]
 }
 
-func (r *RecordHistory) writeRecord(id uint64, req *RecordUnity) {
+func (r *recordMemory) writeRecord(id uint64, req *recordUnity) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.Records[id] = req
+	r.records[id] = req
 }
 
-func (r *RecordHistory) deleteRecord(id uint64) {
+func (r *recordMemory) deleteRecord(id uint64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	delete(r.Records, id)
+	delete(r.records, id)
 }

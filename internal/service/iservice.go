@@ -1,8 +1,10 @@
-package interfaces
+package service
+
+import "sync"
 
 type IService interface {
 	Status() ServiceStatus
-	Start() error
+	Start(startSync *sync.WaitGroup)
 	Stop()
 }
 

@@ -1,4 +1,4 @@
-module github.com/IonicHealthUsa/ionlog
+module github.com/IonicHealthUsa/ionlog/v2
 
 go 1.23.1
 

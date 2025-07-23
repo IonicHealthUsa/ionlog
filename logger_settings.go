@@ -2,61 +2,80 @@ package ionlog
 
 import (
 	"io"
-	"log/slog"
 
-	"github.com/IonicHealthUsa/ionlog/internal/interfaces"
-	"github.com/IonicHealthUsa/ionlog/internal/logcore"
-	"github.com/IonicHealthUsa/ionlog/internal/logrotation"
+	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/service"
 )
 
-type customAttrs func(i logcore.IIonLogger)
+type customAttrs func(i service.ICoreService)
 
-const (
-	Daily   = logrotation.Daily
-	Weekly  = logrotation.Weekly
-	Monthly = logrotation.Monthly
-)
-
-// SetLogAttributes sets the log SetLogAttributes
+// SetAttributes sets the log SetAttributes
 // fns is a variadic parameter that accepts customAttrs
-func SetLogAttributes(fns ...customAttrs) {
-	if logcore.Logger().Status() == interfaces.Running {
-		slog.Warn("Logger is already running, cannot set attributes")
-		return
-	}
+func SetAttributes(fns ...customAttrs) {
+	Flush()
 
 	for _, fn := range fns {
-		fn(logcore.Logger())
+		fn(logger)
 	}
 }
 
-// WithTargets sets the write targets for the logger, every log will be written to these targets.
-func WithTargets(w ...io.Writer) customAttrs {
-	return func(i logcore.IIonLogger) {
-		i.SetTargets(w...)
+// WithWriters sets the write targets for the logger,
+// every log will be written to these targets.
+func WithWriters(w ...io.Writer) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().Writer().AddWriter(w...)
+	}
+}
+
+// WithoutWriters deletes the write targets for the logger.
+func WithoutWriters(w ...io.Writer) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().Writer().DeleteWriter(w...)
 	}
 }
 
 // WithStaticFields sets the static fields for the logger, every log will have these fields.
 // usage: WithStaicFields(map[string]string{"key": "value", "key2": "value2", ...})
 func WithStaticFields(attrs map[string]string) customAttrs {
-	return func(i logcore.IIonLogger) {
-		index := 0
-		slogAttrs := make([]slog.Attr, len(attrs))
-		for k, v := range attrs {
-			slogAttrs[index] = slog.String(k, v)
-			index++
-		}
-		handler := i.CreateDefaultLogHandler().WithAttrs(slogAttrs)
-		i.SetLogEngine(slog.New(handler))
+	return func(i service.ICoreService) {
+		i.LogEngine().AddStaticFields(attrs)
 	}
 }
 
-// WithLogFileRotation enables log file rotation, specifying the directory where log files will be stored, the maximum size of the log folder in bytes, and the rotation frequency.
-func WithLogFileRotation(folder string, folderMaxSize uint, period logrotation.PeriodicRotation) customAttrs {
-	return func(i logcore.IIonLogger) {
-		i.SetRotationPeriod(period)
-		i.SetFolder(folder)
-		i.SetFolderMaxSize(folderMaxSize)
+// WithoutStaticFields remove the static fields for the logger.
+// Use the key of the static field to remove.
+func WithoutStaticFields(fields ...string) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().DeleteStaticField(fields...)
+	}
+}
+
+// WithLogFileRotation enables log file rotation,
+// specifying the directory where log files will be stored,
+// the maximum size of the log folder in bytes, and the rotation frequency.
+func WithLogFileRotation(
+	folder string,
+	folderMaxSize uint,
+	period rotationengine.PeriodicRotation,
+) customAttrs {
+	return func(i service.ICoreService) {
+		i.CreateRotationService(folder, folderMaxSize, period)
+	}
+}
+
+// WithQueueSize sets the size of the reports queue,
+// which stores logs before sending them to a file descriptor.
+func WithQueueSize(size uint) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().SetReportQueueSize(size)
+	}
+}
+
+// WithTraceMode enables trace log mode.
+// For default, the trace mode is disable,
+// to enable is need pass a true boolean.
+func WithTraceMode(mode bool) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().SetTraceMode(mode)
 	}
 }

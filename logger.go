@@ -2,190 +2,235 @@ package ionlog
 
 import (
 	"fmt"
-	"log/slog"
+	"sync"
+	"time"
 
-	"github.com/IonicHealthUsa/ionlog/internal/logcore"
+	"github.com/IonicHealthUsa/ionlog/internal/core/logengine"
+	"github.com/IonicHealthUsa/ionlog/internal/core/runtimeinfo"
+	"github.com/IonicHealthUsa/ionlog/internal/service"
 	"github.com/IonicHealthUsa/ionlog/internal/usecases"
 )
 
+// Start begin the ionlog reports when it does not running
 func Start() {
-	logcore.Logger().Start()
+	startSync := sync.WaitGroup{}
+	startSync.Add(1)
+	go logger.Start(&startSync)
+	startSync.Wait()
 }
 
+// Stop stop the ionlog reports and reset the logger
 func Stop() {
-	logcore.Logger().Stop()
+	logger.Stop()
+	logger = service.NewCoreService() // Reset the logger
+}
+
+// Flush flushes the reports to the output writers.
+func Flush() {
+	logger.LogEngine().FlushReports()
 }
 
 // Info logs a message with level info.
 func Info(msg string) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelInfo, msg, logcore.GetRecordInformation()))
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Info,
+			Msg:        msg,
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
+}
+
+// Infof logs a message with level info.
+// Arguments are handled in the manner of fmt.Printf.
+func Infof(msg string, args ...any) {
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Info,
+			Msg:        fmt.Sprintf(msg, args...),
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
 }
 
 // Error logs a message with level error.
 func Error(msg string) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelError, msg, logcore.GetRecordInformation()))
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Error,
+			Msg:        msg,
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
+}
+
+// Errorf logs a message with level error.
+// Arguments are handled in the manner of fmt.Printf.
+func Errorf(msg string, args ...any) {
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Error,
+			Msg:        fmt.Sprintf(msg, args...),
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
 }
 
 // Warn logs a message with level warn.
 func Warn(msg string) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelWarn, msg, logcore.GetRecordInformation()))
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Warn,
+			Msg:        msg,
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
+}
+
+// Warnf logs a message with level warn.
+// Arguments are handled in the manner of fmt.Printf.
+func Warnf(msg string, args ...any) {
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Warn,
+			Msg:        fmt.Sprintf(msg, args...),
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
 }
 
 // Debug logs a message with level debug.
 func Debug(msg string) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelDebug, msg, logcore.GetRecordInformation()))
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Debug,
+			Msg:        msg,
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
 }
 
-// LogOnceInfo logs a message with level info only once.
-func LogOnceInfo(msg string) {
-	logOnce(slog.LevelInfo, msg, logcore.GetRecordInformation())
-}
-
-// LogOnceError logs a message with level info only once.
-func LogOnceError(msg string) {
-	logOnce(slog.LevelError, msg, logcore.GetRecordInformation())
-}
-
-// LogOnceWarn logs a message with level warn only once.
-func LogOnceWarn(msg string) {
-	logOnce(slog.LevelWarn, msg, logcore.GetRecordInformation())
-}
-
-// LogOnceDebug logs a message with level debug only once.
-func LogOnceDebug(msg string) {
-	logOnce(slog.LevelDebug, msg, logcore.GetRecordInformation())
-}
-
-// LogOnChangeInfo logs a message with level info only when the message changes.
-func LogOnChangeInfo(msg string) {
-	logOnChange(slog.LevelInfo, msg, logcore.GetRecordInformation())
-}
-
-// LogOnChangeError logs a message with level error only when the message changes.
-func LogOnChangeError(msg string) {
-	logOnChange(slog.LevelError, msg, logcore.GetRecordInformation())
-}
-
-// LogOnChangeWarn logs a message with level warn only when the message changes.
-func LogOnChangeWarn(msg string) {
-	logOnChange(slog.LevelWarn, msg, logcore.GetRecordInformation())
-}
-
-// LogOnChangeDebug logs a message with level debug only when the message changes.
-func LogOnChangeDebug(msg string) {
-	logOnChange(slog.LevelDebug, msg, logcore.GetRecordInformation())
-}
-
-// Infof logs a message with level info. Arguments are handled in the manner of fmt.Printf.
-func Infof(msg string, args ...any) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelInfo, fmt.Sprintf(msg, args...), logcore.GetRecordInformation()))
-}
-
-// Errorf logs a message with level error. Arguments are handled in the manner of fmt.Printf.
-func Errorf(msg string, args ...any) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelError, fmt.Sprintf(msg, args...), logcore.GetRecordInformation()))
-}
-
-// Warnf logs a message with level warn. Arguments are handled in the manner of fmt.Printf.
-func Warnf(msg string, args ...any) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelWarn, fmt.Sprintf(msg, args...), logcore.GetRecordInformation()))
-}
-
-// Debugf logs a message with level debug. Arguments are handled in the manner of fmt.Printf.
+// Debugf logs a message with level debug.
+// Arguments are handled in the manner of fmt.Printf.
 func Debugf(msg string, args ...any) {
-	logcore.Logger().SendReport(logcore.NewIonReport(slog.LevelDebug, fmt.Sprintf(msg, args...), logcore.GetRecordInformation()))
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Debug,
+			Msg:        fmt.Sprintf(msg, args...),
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
 }
 
-// LogOnceInfof logs a message with level info only once.
+// Trace logs a message with level trace only when trace mode is enable.
+func Trace(msg string) {
+	if !logger.LogEngine().TraceMode() {
+		return
+	}
+	logger.LogEngine().Report(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Trace,
+			Msg:        msg,
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
+}
+
+// Tracef logs a message with level trace only when trace mode is enable.
+// Arguments are handled in the manner of fmt.Printf.
+func Tracef(msg string, args ...any) {
+	if !logger.LogEngine().TraceMode() {
+		return
+	}
+	logger.LogEngine().Report(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      logengine.Trace,
+			Msg:        fmt.Sprintf(msg, args...),
+			CallerInfo: runtimeinfo.GetCallerInfo(2),
+		},
+	)
+}
+
+// LogOnceInfo logs a message with level info only once time.
+func LogOnceInfo(msg string) {
+	logOnce(logengine.Info, msg)
+}
+
+// LogOnceInfof logs a message with level info only once time.
 // Arguments are handled in the manner of fmt.Printf.
 func LogOnceInfof(msg string, args ...any) {
-	logOnce(slog.LevelInfo, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
+	logOnce(logengine.Info, fmt.Sprintf(msg, args...))
 }
 
-// LogOnceErrorf logs a message with level error only once.
+// LogOnceError logs a message with level error only once time.
+// Arguments are handled in the manner of fmt.Printf.
+func LogOnceError(msg string) {
+	logOnce(logengine.Error, msg)
+}
+
+// LogOnceErrorf logs a message with level error only once time.
 // Arguments are handled in the manner of fmt.Printf.
 func LogOnceErrorf(msg string, args ...any) {
-	logOnce(slog.LevelError, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
+	logOnce(logengine.Error, fmt.Sprintf(msg, args...))
 }
 
-// LogOnceWarnf logs a message with level warn only once.
+// LogOnceWarn logs a message with level warn only once time.
+// Arguments are handled in the manner of fmt.Printf.
+func LogOnceWarn(msg string) {
+	logOnce(logengine.Warn, msg)
+}
+
+// LogOnceWarnf logs a message with level warn only once time.
 // Arguments are handled in the manner of fmt.Printf.
 func LogOnceWarnf(msg string, args ...any) {
-	logOnce(slog.LevelWarn, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
+	logOnce(logengine.Warn, fmt.Sprintf(msg, args...))
 }
 
-// LogOnceDebugf logs a message with level debug only once.
+// LogOnceDebug logs a message with level debug only once time.
+// Arguments are handled in the manner of fmt.Printf.
+func LogOnceDebug(msg string) {
+	logOnce(logengine.Debug, msg)
+}
+
+// LogOnceDebugf logs a message with level debug only once time.
 // Arguments are handled in the manner of fmt.Printf.
 func LogOnceDebugf(msg string, args ...any) {
-	logOnce(slog.LevelDebug, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
+	logOnce(logengine.Debug, fmt.Sprintf(msg, args...))
 }
 
-// LogOnChangeInfof logs a message with level info only when the message changes.
-// Arguments are handled in the manner of fmt.Printf.
-func LogOnChangeInfof(msg string, args ...any) {
-	logOnChange(slog.LevelInfo, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
-}
-
-// LogOnChangeErrorf logs a message with level error only when the message changes.
-// Arguments are handled in the manner of fmt.Printf.
-func LogOnChangeErrorf(msg string, args ...any) {
-	logOnChange(slog.LevelError, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
-}
-
-// LogOnChangeWarnf logs a message with level warn only when the message changes.
-// Arguments are handled in the manner of fmt.Printf.
-func LogOnChangeWarnf(msg string, args ...any) {
-	logOnChange(slog.LevelWarn, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
-}
-
-// LogOnChangeDebugf logs a message with level debug only when the message changes.
-// Arguments are handled in the manner of fmt.Printf.
-func LogOnChangeDebugf(msg string, args ...any) {
-	logOnChange(slog.LevelDebug, fmt.Sprintf(msg, args...), logcore.GetRecordInformation())
-}
-
-// logOnce logs a message with level info only once. Arguments are handled in the manner of fmt.Printf.
-// Each function call will log the message only once.
-// Avoid using it in a sintax like this: LogOnce("Logging..."); LogOnce("Logging...")
-func logOnce(level slog.Level, recordMsg string, callInfo []any) {
-	pkg := string(callInfo[0].(slog.Attr).Value.String())
-	function := string(callInfo[1].(slog.Attr).Value.String())
-	file := string(callInfo[2].(slog.Attr).Value.String())
-	line := int(callInfo[3].(slog.Attr).Value.Int64())
+// logOnce send the information about the function
+// which called the log level to report queue asynchronously.
+func logOnce(level logengine.Level, recordMsg string) {
+	callerInfo := runtimeinfo.GetCallerInfo(3)
 
 	proceed := usecases.LogOnce(
-		logcore.Logger().History(),
-		pkg,
-		function,
-		file,
-		line,
+		logger.LogEngine().Memory(),
 		recordMsg,
+		callerInfo.File,
+		callerInfo.Package,
+		callerInfo.Function,
 	)
 
-	if proceed {
-		logcore.Logger().SendReport(logcore.NewIonReport(level, recordMsg, callInfo))
+	if !proceed {
+		return
 	}
-}
 
-// logOnChange logs a message with level info only when the message changes. Arguments are handled in the manner of fmt.Printf.
-// Each function call will log the message only when it changes.
-// Avoid using it in a sintax like this: LogOnChange("Logging..."); LogOnChange("Logging...")
-func logOnChange(level slog.Level, recordMsg string, callInfo []any) {
-	pkg := string(callInfo[0].(slog.Attr).Value.String())
-	function := string(callInfo[1].(slog.Attr).Value.String())
-	file := string(callInfo[2].(slog.Attr).Value.String())
-	line := int(callInfo[3].(slog.Attr).Value.Int64())
-
-	proceed := usecases.LogOnChange(
-		logcore.Logger().History(),
-		pkg,
-		function,
-		file,
-		line,
-		recordMsg,
+	logger.LogEngine().AsyncReport(
+		logengine.ReportType{
+			Time:       time.Now().Format(time.RFC3339),
+			Level:      level,
+			Msg:        recordMsg,
+			CallerInfo: callerInfo,
+		},
 	)
-
-	if proceed {
-		logcore.Logger().SendReport(logcore.NewIonReport(level, recordMsg, callInfo))
-	}
 }
