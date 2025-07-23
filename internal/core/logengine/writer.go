@@ -48,7 +48,13 @@ func (i *ionWriter) Write(p []byte) (int, error) {
 func (i *ionWriter) AddWriter(writer ...io.Writer) {
 	i.writeLock.Lock()
 	defer i.writeLock.Unlock()
-	i.writers = append(i.writers, writer...)
+	for _, w := range writer {
+		if slices.Contains(i.writers, w) {
+			fmt.Fprintf(os.Stderr, "writer with the pointer %p already exists in the list of writers\n", w)
+			continue
+		}
+		i.writers = append(i.writers, w)
+	}
 }
 
 func (i *ionWriter) DeleteWriter(writer ...io.Writer) {
