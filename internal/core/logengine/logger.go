@@ -43,7 +43,7 @@ type ILogger interface {
 	HandleReports(ctx context.Context)
 	Writer() IWriter
 	Memory() memory.IRecordMemory
-	SetStaticFields(attrs map[string]string)
+	AddStaticFields(attrs map[string]string)
 	DeleteStaticField(fields ...string)
 	SetReportQueueSize(size uint)
 	SetTraceMode(mode bool)
@@ -140,7 +140,7 @@ func (l *logger) Memory() memory.IRecordMemory {
 	return l.logsMemory
 }
 
-func (l *logger) SetStaticFields(attrs map[string]string) {
+func (l *logger) AddStaticFields(attrs map[string]string) {
 	l.reportLock.Lock()
 	defer l.reportLock.Unlock()
 

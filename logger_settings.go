@@ -38,7 +38,7 @@ func WithoutWriters(w ...io.Writer) customAttrs {
 // usage: WithStaicFields(map[string]string{"key": "value", "key2": "value2", ...})
 func WithStaticFields(attrs map[string]string) customAttrs {
 	return func(i service.ICoreService) {
-		i.LogEngine().SetStaticFields(attrs)
+		i.LogEngine().AddStaticFields(attrs)
 	}
 }
 

@@ -454,7 +454,7 @@ func TestMemory(t *testing.T) {
 	})
 }
 
-func TestSetStaticFields(t *testing.T) {
+func TestAddStaticFields(t *testing.T) {
 	t.Run("should set the static fields", func(t *testing.T) {
 		l := NewLogger()
 		_l, ok := l.(*logger)
@@ -466,7 +466,7 @@ func TestSetStaticFields(t *testing.T) {
 		attrs["hello"] = "world"
 		attrs["ionic"] = "health"
 
-		l.SetStaticFields(attrs)
+		l.AddStaticFields(attrs)
 
 		if len(_l.staticFields) != len(attrs) {
 			t.Errorf("expected the size of static field to be %q, but got %q", len(attrs), len(_l.staticFields))
@@ -496,7 +496,7 @@ func TestSetStaticFields(t *testing.T) {
 		attrs["hello"] = "world"
 		attrs["ionic"] = "health"
 
-		l.SetStaticFields(attrs)
+		l.AddStaticFields(attrs)
 
 		if len(_l.staticFields) != len(attrs) {
 			t.Errorf("expected the size of static field to be %q, but got %q", len(attrs), len(_l.staticFields))
@@ -517,7 +517,7 @@ func TestSetStaticFields(t *testing.T) {
 		newAttrs := make(map[string]string, 1)
 		newAttrs["test"] = "123"
 
-		l.SetStaticFields(newAttrs)
+		l.AddStaticFields(newAttrs)
 
 		if len(_l.staticFields) != 3 {
 			t.Errorf("expected the size of static field to be %q, but got %q", 3, len(_l.staticFields))
