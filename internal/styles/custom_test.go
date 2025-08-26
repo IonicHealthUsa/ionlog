@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func TestWrite(t *testing.T) {
 			t.Errorf("expected no error, but got %q", err)
 		}
 
-		l, err := CustomOutput.Write([]byte(reportLog))
+		l, err := CustomOutput(os.Stdout).Write([]byte(reportLog))
 		if err != nil {
 			t.Errorf("expected no error, but got %q", err)
 		}

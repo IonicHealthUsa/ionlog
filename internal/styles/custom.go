@@ -3,6 +3,7 @@ package styles
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -10,7 +11,9 @@ import (
 )
 
 // customWriter type of customs writers
-type customWriter struct{}
+type customWriter struct {
+	output io.Writer
+}
 
 // Logentry logs in JSON format
 type logEntry map[string]string
@@ -38,12 +41,18 @@ func (c *customWriter) Write(p []byte) (int, error) {
 		return 0, fmt.Errorf("failed to process log line: %w", err)
 	}
 
-	return os.Stdout.Write(log)
+	return c.output.Write(log)
 }
 
-var (
-	CustomOutput = &customWriter{}
-)
+var instance = &customWriter{}
+
+func CustomOutput(output io.Writer) io.Writer {
+	if output == nil {
+		output = os.Stdout
+	}
+	instance.output = output
+	return instance
+}
 
 var logEntryKeyDefault = []string{"time", "level", "msg", "file", "package", "function", "line"}
 

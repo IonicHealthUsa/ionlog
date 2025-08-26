@@ -82,10 +82,10 @@ func main() {
 	ionlog.SetAttributes(ionlog.WithTraceMode(false))
 
 	// Add CustomOutput to wrtiters, this will be the colorful logging in the terminal.
-	ionlog.SetAttributes(ionlog.WithWriters(ionlog.CustomOutput))
+	ionlog.SetAttributes(ionlog.WithWriters(ionlog.CustomOutput(os.Stdout)))
 	ionlog.Info("This is a log with color")
 
-	ionlog.SetAttributes(ionlog.WithoutWriters(ionlog.CustomOutput))
+	ionlog.SetAttributes(ionlog.WithoutWriters(ionlog.CustomOutput(os.Stdout)))
 	ionlog.Info("This is a log without color, it will be written to the default output")
 
 	// Add a static field
