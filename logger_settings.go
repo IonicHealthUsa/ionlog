@@ -2,8 +2,10 @@ package ionlog
 
 import (
 	"io"
+	"time"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
+	"github.com/IonicHealthUsa/ionlog/internal/observability/loki"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
 )
 
@@ -77,5 +79,41 @@ func WithQueueSize(size uint) customAttrs {
 func WithTraceMode(mode bool) customAttrs {
 	return func(i service.ICoreService) {
 		i.LogEngine().SetTraceMode(mode)
+	}
+}
+
+// WithLokiIntegration sets up Loki integration for the logger
+func WithLokiIntegration(config LokiConfig) customAttrs {
+	return func(i service.ICoreService) {
+		// Convert public config to internal config
+		internalConfig := config.toInternalConfig()
+
+		integration, err := loki.NewLokiIntegration(internalConfig)
+		if err != nil {
+			// Log error but don't fail the setup
+			// The logger will continue to work without Loki
+			return
+		}
+
+		// Store the integration globally for graceful shutdown
+		lokiMutex.Lock()
+		lokiIntegration = integration
+		lokiMutex.Unlock()
+
+		// Add Loki writer to the logger
+		i.LogEngine().Writer().AddWriter(integration.Writer())
+	}
+}
+
+// GetLokiIntegration returns the current Loki integration (if any)
+func GetLokiIntegration() *loki.LokiIntegration {
+	return getLokiIntegration()
+}
+
+// WithLokiShutdownTimeout sets the timeout for graceful Loki shutdown
+// This overrides both the default and environment variable settings
+func WithLokiShutdownTimeout(timeout time.Duration) customAttrs {
+	return func(i service.ICoreService) {
+		setLokiShutdownTimeout(timeout)
 	}
 }

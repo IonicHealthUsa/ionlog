@@ -16,3 +16,24 @@ code-coverage:
 .PHONY: benchmark
 benchmark:
 	go test -benchmem -bench=. ./...
+
+.PHONY: loki-up
+loki-up:
+	docker-compose -f docker-compose.loki.yml up -d
+	@echo "🚀 Grafana Loki stack started!"
+	@echo "📊 Grafana: http://localhost:3000 (admin/admin)"
+	@echo "🔍 Loki: http://localhost:3100"
+	@echo "📝 Run 'make loki-logs' to see logs"
+
+.PHONY: loki-down
+loki-down:
+	docker-compose -f docker-compose.loki.yml down -v
+	@echo "🛑 Grafana Loki stack stopped and cleaned up!"
+
+.PHONY: loki-logs
+loki-logs:
+	docker-compose -f docker-compose.loki.yml logs -f
+
+.PHONY: loki-status
+loki-status:
+	docker-compose -f docker-compose.loki.yml ps
