@@ -21,6 +21,10 @@ func Start() {
 
 // Stop stop the ionlog reports and reset the logger
 func Stop() {
+	// Gracefully shutdown Loki integration with configured timeout
+	// This is completely transparent - no warnings or errors exposed to user
+	_ = gracefulShutdownLokiInternal(GetLokiShutdownTimeout())
+
 	logger.Stop()
 	logger = service.NewCoreService() // Reset the logger
 }
