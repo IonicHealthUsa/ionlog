@@ -34,6 +34,9 @@ type logger struct {
 
 	reportLock sync.Mutex
 	closeLock  sync.Mutex
+
+	callerStackDepth     int
+	callerStackDepthLock sync.RWMutex
 }
 
 type ILogger interface {
@@ -48,6 +51,8 @@ type ILogger interface {
 	SetReportQueueSize(size uint)
 	SetTraceMode(mode bool)
 	TraceMode() bool
+	SetCallerStackDepth(depth int)
+	GetCallerStackDepth() int
 }
 
 func NewLogger() ILogger {
@@ -57,6 +62,7 @@ func NewLogger() ILogger {
 	logger.logsMemory = memory.NewRecordMemory()
 	logger.reports = make(chan ReportType, 100)
 	logger.writer = NewWriter()
+	logger.callerStackDepth = 2 // default depth
 
 	return logger
 }
@@ -177,4 +183,16 @@ func (l *logger) TraceMode() bool {
 	l.reportLock.Lock()
 	defer l.reportLock.Unlock()
 	return l.traceMode
+}
+
+func (l *logger) SetCallerStackDepth(depth int) {
+	l.callerStackDepthLock.Lock()
+	defer l.callerStackDepthLock.Unlock()
+	l.callerStackDepth = depth
+}
+
+func (l *logger) GetCallerStackDepth() int {
+	l.callerStackDepthLock.RLock()
+	defer l.callerStackDepthLock.RUnlock()
+	return l.callerStackDepth
 }
