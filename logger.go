@@ -37,7 +37,7 @@ func Info(msg string) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Info,
 			Msg:        msg,
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -50,7 +50,7 @@ func Infof(msg string, args ...any) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Info,
 			Msg:        fmt.Sprintf(msg, args...),
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -62,7 +62,7 @@ func Error(msg string) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Error,
 			Msg:        msg,
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -75,7 +75,7 @@ func Errorf(msg string, args ...any) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Error,
 			Msg:        fmt.Sprintf(msg, args...),
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -87,7 +87,7 @@ func Warn(msg string) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Warn,
 			Msg:        msg,
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -100,7 +100,7 @@ func Warnf(msg string, args ...any) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Warn,
 			Msg:        fmt.Sprintf(msg, args...),
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -112,7 +112,7 @@ func Debug(msg string) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Debug,
 			Msg:        msg,
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -125,7 +125,7 @@ func Debugf(msg string, args ...any) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Debug,
 			Msg:        fmt.Sprintf(msg, args...),
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -140,7 +140,7 @@ func Trace(msg string) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Trace,
 			Msg:        msg,
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -156,7 +156,7 @@ func Tracef(msg string, args ...any) {
 			Time:       time.Now().Format(time.RFC3339),
 			Level:      logengine.Trace,
 			Msg:        fmt.Sprintf(msg, args...),
-			CallerInfo: runtimeinfo.GetCallerInfo(2),
+			CallerInfo: runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth()),
 		},
 	)
 }
@@ -211,7 +211,7 @@ func LogOnceDebugf(msg string, args ...any) {
 // logOnce send the information about the function
 // which called the log level to report queue asynchronously.
 func logOnce(level logengine.Level, recordMsg string) {
-	callerInfo := runtimeinfo.GetCallerInfo(3)
+	callerInfo := runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth() + 1)
 
 	proceed := usecases.LogOnce(
 		logger.LogEngine().Memory(),

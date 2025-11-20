@@ -23,7 +23,8 @@ func main() {
 
 	ionlog.SetAttributes(
 		ionlog.WithStaticFields(appInfo),
-		ionlog.WithWriters(ionlog.CustomOutput),
+		ionlog.WithWriters(ionlog.CustomOutput(os.Stdout)),
+		ionlog.WithCallerInfoDepth(2), // default is 2
 	)
 
 	ionlog.Start()
@@ -61,6 +62,7 @@ func main() {
 		ionlog.WithWriters(ionlog.DefaultOutput),
 		// ionlog.WithLogFileRotation(ionlog.DefaultLogFolder, 1*ionlog.Mebibyte, ionlog.Daily),
 		ionlog.WithQueueSize(10),
+		ionlog.WithCallerInfoDepth(2), // default is 2
 	)
 
 	ionlog.Start()
@@ -96,6 +98,10 @@ func main() {
 	// Remove the static field
 	ionlog.SetAttributes(ionlog.WithoutStaticFields("id"))
 	ionlog.Info("This log does not have the static field 'id' anymore")
+
+	// Configure caller stack depth (useful when using wrapper functions)
+	ionlog.SetAttributes(ionlog.WithCallerInfoDepth(3))
+	ionlog.Info("This log uses a custom caller stack depth")
 }
 ```
 
@@ -149,6 +155,13 @@ ionlog.SetAttributes(
 ```go
 ionlog.SetAttributes(
     ionlog.WithTraceMode(true), // or false to disable
+)
+```
+
+### Caller Stack Depth: configure how many stack frames to skip when retrieving caller information.
+```go
+ionlog.SetAttributes(
+    ionlog.WithCallerInfoDepth(3), // default is 2
 )
 ```
 

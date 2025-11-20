@@ -698,3 +698,168 @@ func TestTraceMode(t *testing.T) {
 		}
 	})
 }
+
+func TestCallerStackDepth(t *testing.T) {
+	t.Run("should have default caller stack depth of 2", func(t *testing.T) {
+		l := NewLogger()
+
+		depth := l.GetCallerStackDepth()
+		if depth != 2 {
+			t.Errorf("expected default caller stack depth to be 2, but got %d", depth)
+		}
+	})
+
+	t.Run("should set and get caller stack depth", func(t *testing.T) {
+		l := NewLogger()
+
+		testCases := []int{1, 2, 3, 5, 10}
+		for _, expectedDepth := range testCases {
+			l.SetCallerStackDepth(expectedDepth)
+			actualDepth := l.GetCallerStackDepth()
+			if actualDepth != expectedDepth {
+				t.Errorf("expected caller stack depth to be %d, but got %d", expectedDepth, actualDepth)
+			}
+		}
+	})
+
+	t.Run("should allow concurrent reads without blocking", func(t *testing.T) {
+		l := NewLogger()
+		l.SetCallerStackDepth(3)
+
+		const numReaders = 100
+		results := make(chan int, numReaders)
+		var wg sync.WaitGroup
+
+		// Start multiple concurrent readers
+		for i := 0; i < numReaders; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				results <- l.GetCallerStackDepth()
+			}()
+		}
+
+		wg.Wait()
+		close(results)
+
+		// Verify all readers got the correct value
+		for depth := range results {
+			if depth != 3 {
+				t.Errorf("expected caller stack depth to be 3, but got %d", depth)
+			}
+		}
+	})
+
+	t.Run("should maintain consistency during concurrent operations", func(t *testing.T) {
+		l := NewLogger()
+		l.SetCallerStackDepth(2)
+
+		const numIterations = 1000
+		var wg sync.WaitGroup
+		errors := make(chan error, numIterations)
+
+		// Writer goroutine: continuously write values
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < numIterations; i++ {
+				l.SetCallerStackDepth(i % 10)
+			}
+		}()
+
+		// Reader goroutines: continuously read values
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for j := 0; j < numIterations/10; j++ {
+					depth := l.GetCallerStackDepth()
+					if depth < 0 || depth >= 10 {
+						errors <- fmt.Errorf("unexpected depth value: %d", depth)
+					}
+				}
+			}()
+		}
+
+		wg.Wait()
+		close(errors)
+
+		// Check for errors
+		for err := range errors {
+			if err != nil {
+				t.Error(err)
+			}
+		}
+
+		// Final value should be valid
+		finalDepth := l.GetCallerStackDepth()
+		if finalDepth < 0 || finalDepth >= 10 {
+			t.Errorf("expected final depth to be between 0 and 9, but got %d", finalDepth)
+		}
+	})
+
+	t.Run("should handle concurrent writes safely", func(t *testing.T) {
+		l := NewLogger()
+		l.SetCallerStackDepth(1)
+
+		const numWriters = 50
+		var wg sync.WaitGroup
+
+		// Start multiple concurrent writers
+		for i := 0; i < numWriters; i++ {
+			wg.Add(1)
+			go func(value int) {
+				defer wg.Done()
+				l.SetCallerStackDepth(value)
+			}(i + 10)
+		}
+
+		wg.Wait()
+
+		// Final value should be one of the written values
+		finalDepth := l.GetCallerStackDepth()
+		if finalDepth < 10 || finalDepth >= 10+numWriters {
+			t.Errorf("expected caller stack depth to be between 10 and %d, but got %d", 10+numWriters-1, finalDepth)
+		}
+	})
+
+	t.Run("should handle mixed concurrent reads and writes", func(t *testing.T) {
+		l := NewLogger()
+		l.SetCallerStackDepth(2)
+
+		const numOperations = 100
+		var wg sync.WaitGroup
+		errors := make(chan error, numOperations*2)
+
+		// Start concurrent readers
+		for i := 0; i < numOperations; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				depth := l.GetCallerStackDepth()
+				if depth < 0 || depth >= 20 {
+					errors <- fmt.Errorf("unexpected depth value: %d", depth)
+				}
+			}()
+		}
+
+		// Start concurrent writers
+		for i := 0; i < numOperations; i++ {
+			wg.Add(1)
+			go func(value int) {
+				defer wg.Done()
+				l.SetCallerStackDepth(value % 20)
+			}(i)
+		}
+
+		wg.Wait()
+		close(errors)
+
+		// Check for errors
+		for err := range errors {
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	})
+}

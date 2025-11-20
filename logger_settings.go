@@ -79,3 +79,12 @@ func WithTraceMode(mode bool) customAttrs {
 		i.LogEngine().SetTraceMode(mode)
 	}
 }
+
+// WithCallerInfoDepth sets the caller stack depth for log functions.
+// The depth determines how many stack frames to skip when retrieving caller information.
+// Default depth is 2. For LogOnce functions, the depth is automatically increased by 1.
+func WithCallerInfoDepth(depth int) customAttrs {
+	return func(i service.ICoreService) {
+		i.LogEngine().SetCallerStackDepth(depth)
+	}
+}
