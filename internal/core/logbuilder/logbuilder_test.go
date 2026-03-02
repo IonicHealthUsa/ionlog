@@ -1,6 +1,7 @@
 package logbuilder
 
 import (
+	"encoding/json"
 	"reflect"
 	"strconv"
 	"testing"
@@ -252,6 +253,24 @@ func TestSpecialCharacters(t *testing.T) {
 
 		if !reflect.DeepEqual(result, expected) {
 			t.Errorf("Special characters handling incorrect, got: %s, want: %s", result, expected)
+		}
+	})
+
+	t.Run("Escapes newlines and quotes so JSON is valid", func(t *testing.T) {
+		lb := NewLogBuilder()
+		msg := "line1\nline2\r\n\tand tab"
+		lb.AddFields("msg", msg, "quote", `say "hello"`)
+
+		result := lb.Compile()
+		var decoded map[string]string
+		if err := json.Unmarshal(result[:len(result)-1], &decoded); err != nil {
+			t.Fatalf("Compile() produced invalid JSON: %v\noutput: %s", err, result)
+		}
+		if decoded["msg"] != msg {
+			t.Errorf("msg round-trip: got %q, want %q", decoded["msg"], msg)
+		}
+		if decoded["quote"] != `say "hello"` {
+			t.Errorf("quote round-trip: got %q", decoded["quote"])
 		}
 	})
 }
