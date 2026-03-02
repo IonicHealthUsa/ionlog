@@ -44,6 +44,22 @@ func main() {
 }
 ```
 
+## Example Output
+
+Running the basic example above with `ionlog.CustomOutput(os.Stdout)` will produce JSON log entries similar to the following:
+
+```json
+{"time":"2024-12-06T20:59:47.252944832-03:00","level":"INFO","msg":"Test version: 1.0.0","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":33}
+
+{"time":"2024-12-06T20:59:47.253012345-03:00","level":"DEBUG","msg":"This is a debug message: some debug info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":34}
+
+{"time":"2024-12-06T20:59:47.253078901-03:00","level":"WARN","msg":"This is a warning message: some warning info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":35}
+
+{"time":"2024-12-06T20:59:47.253145678-03:00","level":"ERROR","msg":"This is an error message: some error info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":36}
+
+{"time":"2024-12-06T20:59:47.253212345-03:00","level":"TRACE","msg":"This is a trace message: some trace info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":43}
+```
+
 # Advanced Usage
 ```go
 package main
