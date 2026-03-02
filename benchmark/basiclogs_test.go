@@ -9,7 +9,7 @@ import (
 var fakeMessage = "We shall not cease from exploration and the end of all our exploring will be to arrive where we started and know the place for the first time."
 
 func BenchmarkBasicLogs(b *testing.B) {
-	ionlog.SetAttributes(
+	ionlog.Configure(
 		ionlog.WithQueueSize(1000),
 		ionlog.WithTraceMode(true),
 	)
@@ -79,7 +79,7 @@ func BenchmarkBasicLogs(b *testing.B) {
 }
 
 func BenchmarkBasicLogsParallel(b *testing.B) {
-	ionlog.SetAttributes(
+	ionlog.Configure(
 		ionlog.WithQueueSize(1000),
 		ionlog.WithTraceMode(true),
 	)

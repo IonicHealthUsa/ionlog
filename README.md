@@ -21,7 +21,7 @@ func main() {
 		"env":     "test",
 	}
 
-	ionlog.SetAttributes(
+	ionlog.Configure(
 		ionlog.WithStaticFields(appInfo),
 		ionlog.WithWriters(ionlog.CustomOutput(os.Stdout)),
 		ionlog.WithCallerInfoDepth(2), // default is 2
@@ -37,7 +37,7 @@ func main() {
 	ionlog.Errorf("This is an error message: %v", "some error info")
 
 	// optional: you can turn on trace logging
-	ionlog.SetAttributes(ionlog.WithTraceMode(true))
+	ionlog.Configure(ionlog.WithTraceMode(true))
 
 	// Trace is a sync log
 	ionlog.Tracef("This is a trace message: %v", "some trace info")
@@ -57,7 +57,7 @@ func main() {
 		"env":     "test",
 	}
 
-	ionlog.SetAttributes(
+	ionlog.Configure(
 		ionlog.WithStaticFields(appInfo),
 		ionlog.WithWriters(ionlog.DefaultOutput),
 		// ionlog.WithLogFileRotation(ionlog.DefaultLogFolder, 1*ionlog.Mebibyte, ionlog.Daily),
@@ -75,32 +75,32 @@ func main() {
 	ionlog.Errorf("This is an error message: %v", "some error info")
 
 	// optional: you can turn on trace logging
-	ionlog.SetAttributes(ionlog.WithTraceMode(true))
+	ionlog.Configure(ionlog.WithTraceMode(true))
 
 	// Trace is a sync log
 	ionlog.Tracef("This is a trace message: %v", "some trace info")
 
 	// Turn off trace mode
-	ionlog.SetAttributes(ionlog.WithTraceMode(false))
+	ionlog.Configure(ionlog.WithTraceMode(false))
 
 	// Add CustomOutput to wrtiters, this will be the colorful logging in the terminal.
-	ionlog.SetAttributes(ionlog.WithWriters(ionlog.CustomOutput(os.Stdout)))
+	ionlog.Configure(ionlog.WithWriters(ionlog.CustomOutput(os.Stdout)))
 	ionlog.Info("This is a log with color")
 
-	ionlog.SetAttributes(ionlog.WithoutWriters(ionlog.CustomOutput(os.Stdout)))
+	ionlog.Configure(ionlog.WithoutWriters(ionlog.CustomOutput(os.Stdout)))
 	ionlog.Info("This is a log without color, it will be written to the default output")
 
 	// Add a static field
 	ID := "0xABC123"
-	ionlog.SetAttributes(ionlog.WithStaticFields(map[string]string{"id": ID}))
+	ionlog.Configure(ionlog.WithStaticFields(map[string]string{"id": ID}))
 	ionlog.Infof("This log has a static field: %s", ID)
 
 	// Remove the static field
-	ionlog.SetAttributes(ionlog.WithoutStaticFields("id"))
+	ionlog.Configure(ionlog.WithoutStaticFields("id"))
 	ionlog.Info("This log does not have the static field 'id' anymore")
 
 	// Configure caller stack depth (useful when using wrapper functions)
-	ionlog.SetAttributes(ionlog.WithCallerInfoDepth(3))
+	ionlog.Configure(ionlog.WithCallerInfoDepth(3))
 	ionlog.Info("This log uses a custom caller stack depth")
 }
 ```
@@ -110,14 +110,14 @@ func main() {
 
 ### Add a writers: Log to multiple destinations (console, files, websockets, custom writers).
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithWriters(ionlog.DefaultOutput, ionlog.CustomOutput, ...),
 )
 ```
 
 ### Remove a writer: Remove the writer by its reference.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithoutWriters(ionlog.CustomOutput, ...),
 )
 ```
@@ -125,42 +125,42 @@ ionlog.SetAttributes(
 ### Static Fields: Add fixed fields to all logs (e.g., service name, environment).
 ```go
 fields := map[string]string{"service-id": "0xcafe"}
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithStaticFields(fields),
 )
 ```
 
 ### Static Fields: Remove the static fields.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithoutStaticFields("service-id"),
 )
 ```
 
 ### Log Rotation: Auto-rotate logs by size and time.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithLogFileRotation("logs", 100*ionlog.Mebibyte, ionlog.Hourly),
 )
 ```
 
 ### Report Size: sets the size pf reports queue.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithQueueSize(200),
 )
 ```
 
 ### Trace: enable or disable the trace mode.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithTraceMode(true), // or false to disable
 )
 ```
 
 ### Caller Stack Depth: configure how many stack frames to skip when retrieving caller information.
 ```go
-ionlog.SetAttributes(
+ionlog.Configure(
     ionlog.WithCallerInfoDepth(3), // default is 2
 )
 ```

@@ -9,12 +9,9 @@ import (
 
 type customAttrs func(i service.ICoreService)
 
-// SetAttributes sets the log SetAttributes
-// fns is a variadic parameter that accepts customAttrs
-func SetAttributes(fns ...customAttrs) {
-	lock.RLock()
-	defer lock.RUnlock()
-
+// Configure applies the given options to the logger.
+// fns is a variadic parameter that accepts customAttrs (e.g. WithWriters, WithTraceMode).
+func Configure(fns ...customAttrs) {
 	Flush()
 
 	for _, fn := range fns {
