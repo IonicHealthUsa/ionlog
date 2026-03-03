@@ -65,6 +65,15 @@ func TestProcessLogline(t *testing.T) {
 		}
 	})
 
+	t.Run("accepts msg with escaped newlines and quotes (valid JSON from logbuilder)", func(t *testing.T) {
+		// Logbuilder escapes \n, \r, \t, " and \ so CustomOutput can unmarshal
+		line := []byte(`{"time":"2026-01-01T12:00:00Z","level":"INFO","msg":"line1\nline2\n","file":"main.go","package":"main","function":"main","line":"42"}` + "\n")
+		_, err := processLogLine(line)
+		if err != nil {
+			t.Errorf("processLogLine with newline in msg should succeed, got: %v", err)
+		}
+	})
+
 	t.Run("should return the correct format for each level type", func(t *testing.T) {
 		testCase := [...]struct {
 			report          logengine.ReportType

@@ -46,6 +46,49 @@ func (l *logBuilder) writeString(str string) {
 	}
 }
 
+// writeJSONStringEscaped writes str into the buffer with JSON string escaping.
+// This ensures that newlines, quotes, backslashes, and other control chars
+// produce valid JSON so downstream consumers can unmarshal.
+func (l *logBuilder) writeJSONStringEscaped(str string) {
+	for _, b := range []byte(str) {
+		switch b {
+		case '"':
+			l.writeByte('\\')
+			l.writeByte('"')
+		case '\\':
+			l.writeByte('\\')
+			l.writeByte('\\')
+		case '\n':
+			l.writeByte('\\')
+			l.writeByte('n')
+		case '\r':
+			l.writeByte('\\')
+			l.writeByte('r')
+		case '\t':
+			l.writeByte('\\')
+			l.writeByte('t')
+		default:
+			if b < 0x20 {
+				l.writeByte('\\')
+				l.writeByte('u')
+				l.writeByte('0')
+				l.writeByte('0')
+				l.writeByte(hexChar(b >> 4))
+				l.writeByte(hexChar(b & 0x0f))
+			} else {
+				l.writeByte(b)
+			}
+		}
+	}
+}
+
+func hexChar(b byte) byte {
+	if b < 10 {
+		return '0' + b
+	}
+	return 'a' + (b - 10)
+}
+
 func (l *logBuilder) resetBuff() {
 	l.p = 0
 	l.writeByte('{')
@@ -61,12 +104,12 @@ func (l *logBuilder) AddFields(args ...string) {
 			l.writeByte(',')
 		}
 		l.writeByte('"')
-		l.writeString(args[i])
+		l.writeJSONStringEscaped(args[i])
 		l.writeByte('"')
 		l.writeByte(':')
 
 		l.writeByte('"')
-		l.writeString(args[i+1])
+		l.writeJSONStringEscaped(args[i+1])
 		l.writeByte('"')
 	}
 }
