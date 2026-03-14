@@ -1,6 +1,6 @@
 package rotationengine
 
-type PeriodicRotation int
+type PeriodicRotation = int
 
 const (
 	NoAutoRotate PeriodicRotation = iota
