@@ -579,18 +579,17 @@ func TestCheckRotation(t *testing.T) {
 			t.Fatal("NewRotationEngine() did not return a instance of rotation engine")
 		}
 
-		t.Run("same year and month but different day", func(t *testing.T) {
+		t.Run("same ISO week but different day", func(t *testing.T) {
 			timeNow := time.Now()
-			day := timeNow.Day()
-			if day >= 28 {
-				day -= 1
+			var fileDate time.Time
+			if timeNow.Weekday() == time.Monday {
+				fileDate = timeNow.AddDate(0, 0, 1)
 			} else {
-				day += 1
+				fileDate = timeNow.AddDate(0, 0, -1)
 			}
-			fileDate := time.Date(timeNow.Year(), timeNow.Month(), day, 0, 0, 0, 0, time.UTC)
 
 			if _r.checkRotation(fileDate) {
-				t.Error("expected the return to be true, but got false")
+				t.Errorf("expected the return to be false, but got true (Now: %v, File: %v)", timeNow.Format(time.RFC3339), fileDate.Format(time.RFC3339))
 			}
 		})
 

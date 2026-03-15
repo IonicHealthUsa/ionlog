@@ -120,7 +120,7 @@ func (r *rotationEngine) assertFolder() error {
 func (r *rotationEngine) checkRotation(fileDate time.Time) bool {
 	now := time.Now()
 	y, m, d := now.Date()
-	_, w := now.UTC().ISOWeek()
+	_, w := now.ISOWeek()
 
 	switch r.rotation {
 	case Daily:
@@ -128,7 +128,7 @@ func (r *rotationEngine) checkRotation(fileDate time.Time) bool {
 	case Weekly:
 		// Warning: Read the ISOWeek() documentation to check any inconsistencies
 		// in the end of a year or the beginning of a new year.
-		_, fileW := fileDate.UTC().ISOWeek()
+		_, fileW := fileDate.ISOWeek()
 		return fileDate.Year() != y || fileW != w
 	case Monthly:
 		return fileDate.Year() != y || fileDate.Month() != m
