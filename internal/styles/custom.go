@@ -44,14 +44,11 @@ func (c *customWriter) Write(p []byte) (int, error) {
 	return c.output.Write(log)
 }
 
-var instance = &customWriter{}
-
 func CustomOutput(output io.Writer) io.Writer {
 	if output == nil {
 		output = os.Stdout
 	}
-	instance.output = output
-	return instance
+	return &customWriter{output: output}
 }
 
 var logEntryKeyDefault = []string{"time", "level", "msg", "file", "package", "function", "line"}
