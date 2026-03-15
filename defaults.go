@@ -2,6 +2,7 @@ package ionlog
 
 import (
 	"os"
+	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
@@ -24,6 +25,7 @@ const (
 const DefaultLogFolder = "logs"
 
 var logger = service.NewCoreService()
+var lock = sync.RWMutex{}
 
 var DefaultOutput = os.Stdout
 

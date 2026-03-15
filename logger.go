@@ -13,25 +13,38 @@ import (
 
 // Start begin the ionlog reports when it does not running
 func Start() {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	startSync := sync.WaitGroup{}
 	startSync.Add(1)
+
 	go logger.Start(&startSync)
 	startSync.Wait()
 }
 
 // Stop stop the ionlog reports and reset the logger
 func Stop() {
+	lock.Lock()
+	defer lock.Unlock()
+
 	logger.Stop()
 	logger = service.NewCoreService() // Reset the logger
 }
 
 // Flush flushes the reports to the output writers.
 func Flush() {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().FlushReports()
 }
 
 // Info logs a message with level info.
 func Info(msg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -45,6 +58,9 @@ func Info(msg string) {
 // Infof logs a message with level info.
 // Arguments are handled in the manner of fmt.Printf.
 func Infof(msg string, args ...any) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -57,6 +73,9 @@ func Infof(msg string, args ...any) {
 
 // Error logs a message with level error.
 func Error(msg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -70,6 +89,9 @@ func Error(msg string) {
 // Errorf logs a message with level error.
 // Arguments are handled in the manner of fmt.Printf.
 func Errorf(msg string, args ...any) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -82,6 +104,9 @@ func Errorf(msg string, args ...any) {
 
 // Warn logs a message with level warn.
 func Warn(msg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -95,6 +120,9 @@ func Warn(msg string) {
 // Warnf logs a message with level warn.
 // Arguments are handled in the manner of fmt.Printf.
 func Warnf(msg string, args ...any) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -107,6 +135,9 @@ func Warnf(msg string, args ...any) {
 
 // Debug logs a message with level debug.
 func Debug(msg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -120,6 +151,9 @@ func Debug(msg string) {
 // Debugf logs a message with level debug.
 // Arguments are handled in the manner of fmt.Printf.
 func Debugf(msg string, args ...any) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	logger.LogEngine().AsyncReport(
 		logengine.ReportType{
 			Time:       time.Now().Format(time.RFC3339),
@@ -132,6 +166,9 @@ func Debugf(msg string, args ...any) {
 
 // Trace logs a message with level trace only when trace mode is enable.
 func Trace(msg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	if !logger.LogEngine().TraceMode() {
 		return
 	}
@@ -148,6 +185,9 @@ func Trace(msg string) {
 // Tracef logs a message with level trace only when trace mode is enable.
 // Arguments are handled in the manner of fmt.Printf.
 func Tracef(msg string, args ...any) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	if !logger.LogEngine().TraceMode() {
 		return
 	}
@@ -211,6 +251,9 @@ func LogOnceDebugf(msg string, args ...any) {
 // logOnce send the information about the function
 // which called the log level to report queue asynchronously.
 func logOnce(level logengine.Level, recordMsg string) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	callerInfo := runtimeinfo.GetCallerInfo(logger.LogEngine().GetCallerStackDepth() + 1)
 
 	proceed := usecases.LogOnce(
