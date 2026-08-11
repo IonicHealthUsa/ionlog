@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/filesystem"
 )
@@ -12,6 +13,7 @@ import (
 type rotationEngine struct {
 	filesystem.Filesystem
 
+	logFileMu     sync.RWMutex
 	logFile       io.WriteCloser
 	folder        string
 	maxFolderSize uint
@@ -46,6 +48,9 @@ func NewRotationEngine(folder string, maxFolderSize uint, rotation PeriodicRotat
 
 // Write writes the log message to the log file.
 func (r *rotationEngine) Write(p []byte) (n int, err error) {
+	r.logFileMu.RLock()
+	defer r.logFileMu.RUnlock()
+
 	if r.logFile == nil {
 		return 0, ErrLogFileNotSet
 	}
@@ -64,6 +69,13 @@ func (r *rotationEngine) CloseLogFile() {
 
 // closeFile closes the log file.
 func (r *rotationEngine) closeFile() {
+	r.logFileMu.Lock()
+	defer r.logFileMu.Unlock()
+	r.closeFileLocked()
+}
+
+// closeFileLocked closes the log file. Callers must hold logFileMu.
+func (r *rotationEngine) closeFileLocked() {
 	if r.logFile != nil {
 		if err := r.logFile.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Error to close current log file: %v\n", err)
@@ -78,7 +90,10 @@ func (r *rotationEngine) setLogFile(file io.WriteCloser) {
 		return
 	}
 
-	r.closeFile()
+	r.logFileMu.Lock()
+	defer r.logFileMu.Unlock()
+
+	r.closeFileLocked()
 	r.logFile = file
 }
 
@@ -112,7 +127,11 @@ func (r *rotationEngine) autoRotate() {
 	}
 
 	// no rotaion needed, check if file is open
-	if r.logFile == nil {
+	r.logFileMu.RLock()
+	fileIsOpen := r.logFile != nil
+	r.logFileMu.RUnlock()
+
+	if !fileIsOpen {
 		actualFile, err := r.OpenFile(filepath.Join(r.folder, fileName), os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err.Error())
