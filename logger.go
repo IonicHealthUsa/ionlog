@@ -32,14 +32,6 @@ func Stop() {
 	logger = service.NewCoreService() // Reset the logger
 }
 
-// Flush flushes the reports to the output writers.
-func Flush() {
-	lock.RLock()
-	defer lock.RUnlock()
-
-	logger.LogEngine().FlushReports()
-}
-
 // Info logs a message with level info.
 func Info(msg string) {
 	lock.RLock()
