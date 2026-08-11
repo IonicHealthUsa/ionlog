@@ -39,7 +39,7 @@ func (r *rotationEngine) getAllfiles() ([]string, error) {
 		}
 
 		if !filePattern.MatchString(file.Name()) {
-			fmt.Fprintf(os.Stderr, "file: %s is not a valid log file. Skipping.\n", file.Name())
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] file: %s is not a valid log file. Skipping.\n", file.Name())
 			continue
 		}
 
@@ -63,7 +63,7 @@ func (r *rotationEngine) getMostRecentLogFile() (string, error) {
 	for _, file := range files {
 		fileTime, err := r.getFileDate(file)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get file date for file: %s. Skipping.\n", file)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to get file date for file: %s. Skipping.\n", file)
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (r *rotationEngine) getMostRecentLogFile() (string, error) {
 func (r *rotationEngine) createNewFile() {
 	_, err := r.ReadDir(r.folder)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -93,7 +93,7 @@ func (r *rotationEngine) createNewFile() {
 
 	f, err := r.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -134,7 +134,7 @@ func (r *rotationEngine) checkRotation(fileDate time.Time) bool {
 	case Monthly:
 		return fileDate.Year() != y || fileDate.Month() != m
 	default:
-		fmt.Fprint(os.Stderr, "rotation value is invalid\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] rotation value is invalid\n")
 		return false
 	}
 }
@@ -151,7 +151,7 @@ func (r *rotationEngine) getOldestLogFile() (string, error) {
 	for _, file := range files {
 		fileTime, err := r.getFileDate(file)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get file date for file: %s. Skipping.\n", file)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to get file date for file: %s. Skipping.\n", file)
 			continue
 		}
 

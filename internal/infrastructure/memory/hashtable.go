@@ -2,7 +2,8 @@
 package memory
 
 import (
-	"log/slog"
+	"fmt"
+	"os"
 	"sync"
 
 	"github.com/cespare/xxhash"
@@ -65,7 +66,7 @@ func (r *recordMemory) AddRecord(id uint64, msg string) error {
 
 func (r *recordMemory) RemoveRecord(id uint64) {
 	if r.GetRecord(id) == nil {
-		slog.Debug("Trying to remove non-existing record")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Trying to remove non-existing record\n")
 		return
 	}
 	r.deleteRecord(id)

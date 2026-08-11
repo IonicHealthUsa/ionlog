@@ -60,7 +60,7 @@ func (c *coreService) Start(startSync *sync.WaitGroup) {
 	defer func() {
 		if r := recover(); r != nil {
 			ci := runtimeinfo.GetCallerInfo(3)
-			fmt.Fprintf(os.Stderr, "logger service panic: '%v' [%v](%v) %v:%v\n", r, ci.Package, ci.Function, ci.File, ci.Line)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] logger service panic: '%v' [%v](%v) %v:%v\n", r, ci.Package, ci.Function, ci.File, ci.Line)
 		}
 	}()
 

@@ -42,7 +42,7 @@ func (r *rotationService) Start(startSync *sync.WaitGroup) {
 	defer func() {
 		if rec := recover(); rec != nil {
 			ci := runtimeinfo.GetCallerInfo(3)
-			fmt.Fprintf(os.Stderr, "rotation service panic: '%v' [%v](%v) %v:%v\n", rec, ci.Package, ci.Function, ci.File, ci.Line)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] rotation service panic: '%v' [%v](%v) %v:%v\n", rec, ci.Package, ci.Function, ci.File, ci.Line)
 		}
 	}()
 

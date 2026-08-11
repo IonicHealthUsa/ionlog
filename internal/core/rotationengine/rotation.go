@@ -78,7 +78,7 @@ func (r *rotationEngine) closeFile() {
 func (r *rotationEngine) closeFileLocked() {
 	if r.logFile != nil {
 		if err := r.logFile.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error to close current log file: %v\n", err)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Error to close current log file: %v\n", err)
 		}
 		r.logFile = nil
 	}
@@ -86,7 +86,7 @@ func (r *rotationEngine) closeFileLocked() {
 
 func (r *rotationEngine) setLogFile(file io.WriteCloser) {
 	if file == nil {
-		fmt.Fprint(os.Stderr, "Cannot set the log file: file is not valid\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Cannot set the log file: file is not valid\n")
 		return
 	}
 
@@ -99,7 +99,7 @@ func (r *rotationEngine) setLogFile(file io.WriteCloser) {
 
 func (r *rotationEngine) autoRotate() {
 	if err := r.assertFolder(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error in assert folder: %v", err)
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Error in assert folder: %v\n", err)
 		return
 	}
 
@@ -111,13 +111,13 @@ func (r *rotationEngine) autoRotate() {
 	}
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	fileDate, err := r.getFileDate(fileName)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -134,7 +134,7 @@ func (r *rotationEngine) autoRotate() {
 	if !fileIsOpen {
 		actualFile, err := r.OpenFile(filepath.Join(r.folder, fileName), os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 			return
 		}
 		r.setLogFile(actualFile)
@@ -148,7 +148,7 @@ func (r *rotationEngine) autoCheckFolderSize() {
 
 	size, err := r.getFolderSize()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -158,19 +158,19 @@ func (r *rotationEngine) autoCheckFolderSize() {
 
 	oldestFile, err := r.getOldestLogFile()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	if err = r.RemoveFile(filepath.Join(r.folder, oldestFile)); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	// check if it need to create a new file
 	files, err := r.getAllfiles()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 	if len(files) == 0 {

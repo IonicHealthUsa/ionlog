@@ -30,7 +30,7 @@ func NewLogBuilder() ILogBuilder {
 
 func (l *logBuilder) writeByte(b byte) {
 	if len(l.buf) >= maxBufsize {
-		fmt.Fprintf(os.Stderr, "logBuilder buffer is full, cannot handle more strings for this log entry.\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] logBuilder buffer is full, cannot handle more strings for this log entry.\n")
 		return
 	}
 	if l.p == uint(len(l.buf)) {

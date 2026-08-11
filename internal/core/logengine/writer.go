@@ -31,13 +31,13 @@ func (i *ionWriter) Write(p []byte) (int, error) {
 
 	for index, w := range i.writers {
 		if w == nil {
-			fmt.Fprintf(os.Stderr, "Expected the %v° target to be not nil\n", index+1)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Expected the %v° target to be not nil\n", index+1)
 			continue
 		}
 
 		_, err := w.Write(p)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to write to in the %v° target, error: %v\n", index+1, err)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to write to in the %v° target, error: %v\n", index+1, err)
 			continue
 		}
 	}
@@ -50,7 +50,7 @@ func (i *ionWriter) AddWriter(writer ...io.Writer) {
 	defer i.writeLock.Unlock()
 	for _, w := range writer {
 		if slices.Contains(i.writers, w) {
-			fmt.Fprintf(os.Stderr, "writer with the pointer %p already exists in the list of writers\n", w)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] writer with the pointer %p already exists in the list of writers\n", w)
 			continue
 		}
 		i.writers = append(i.writers, w)
@@ -71,7 +71,7 @@ func (i *ionWriter) DeleteWriter(writer ...io.Writer) {
 			}
 		}
 		if !isFind {
-			fmt.Fprintf(os.Stderr, "writer with the pointer %q does not find", wd)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] writer with the pointer %q does not find\n", wd)
 		}
 	}
 }

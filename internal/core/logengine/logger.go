@@ -91,7 +91,7 @@ func (l *logger) AsyncReport(r ReportType) {
 	select {
 	case l.reports <- r:
 	case <-time.After(1 * time.Second):
-		fmt.Fprintf(os.Stderr, "logger reports channel is full\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] logger reports channel is full\n")
 	}
 }
 

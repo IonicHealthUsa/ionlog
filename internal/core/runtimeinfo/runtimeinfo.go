@@ -17,7 +17,7 @@ type CallerInfo struct {
 func GetCallerInfo(skip int) CallerInfo {
 	pc, file, line, ok := runtime.Caller(skip)
 	if !ok {
-		fmt.Fprint(os.Stderr, "Failed to get caller information\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to get caller information\n")
 		return CallerInfo{}
 	}
 
@@ -26,7 +26,7 @@ func GetCallerInfo(skip int) CallerInfo {
 	// Get function name
 	fn := runtime.FuncForPC(pc)
 	if fn == nil {
-		fmt.Fprint(os.Stderr, "Failed to get caller function information\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to get caller function information\n")
 		return CallerInfo{File: file[fileLastSlashIndex+1:], Line: line}
 	}
 	fullFuncName := fn.Name()

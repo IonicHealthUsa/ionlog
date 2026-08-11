@@ -14,7 +14,7 @@ func LogOnce(logsMemory memory.IRecordMemory, msg string, args ...string) bool {
 	if rec == nil {
 		err := logsMemory.AddRecord(id, msg)
 		if err != nil {
-			fmt.Fprint(os.Stderr, "Failed to add record to memory\n")
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Failed to add record to memory\n")
 		}
 		return true
 	}
