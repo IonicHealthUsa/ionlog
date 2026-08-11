@@ -5,8 +5,10 @@ import (
 	"os"
 )
 
-const bufsize = 1024
-const maxBufsize = bufsize * 512 // 1/2 MB
+const (
+	bufsize    = 1024
+	maxBufsize = bufsize * 512 // 1/2 MB
+)
 
 type logBuilder struct {
 	buf []byte
@@ -91,6 +93,8 @@ func hexChar(b byte) byte {
 
 func (l *logBuilder) resetBuff() {
 	l.p = 0
+	l.buf = l.buf[:0] // very important line: avoids blocking the log when maxBufsize is reached.
+
 	l.writeByte('{')
 }
 
