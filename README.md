@@ -46,7 +46,11 @@ func main() {
 
 ## Example Output
 
-Running the basic example above with `ionlog.CustomOutput(os.Stdout)` will produce JSON log entries similar to the following:
+Every log entry is built internally as a raw JSON line. What you see on screen depends on which writer you attach.
+
+### Without `CustomOutput` (e.g. `ionlog.WithWriters(ionlog.DefaultOutput)`)
+
+The raw JSON line is written as-is:
 
 ```json
 {"time":"2024-12-06T20:59:47.252944832-03:00","level":"INFO","msg":"Test version: 1.0.0","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":33}
@@ -58,6 +62,22 @@ Running the basic example above with `ionlog.CustomOutput(os.Stdout)` will produ
 {"time":"2024-12-06T20:59:47.253145678-03:00","level":"ERROR","msg":"This is an error message: some error info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":36}
 
 {"time":"2024-12-06T20:59:47.253212345-03:00","level":"TRACE","msg":"This is a trace message: some trace info","app":"Basic Usage","version":"1.0.0","env":"test","package":"main","function":"main","file":"main.go","line":43}
+```
+
+### With `CustomOutput` (e.g. `ionlog.WithWriters(ionlog.CustomOutput(os.Stdout))`)
+
+`CustomOutput` parses that same JSON line and reformats it into a colorized, human-readable line for the terminal (colors are ANSI, not visible in this markdown):
+
+```
+2024-12-06T20:59:47-03:00 INFO [main main] Test version: 1.0.0 (main.go:33) app:Basic Usage version:1.0.0 env:test
+
+2024-12-06T20:59:47-03:00 DEBUG [main main] This is a debug message: some debug info (main.go:34) app:Basic Usage version:1.0.0 env:test
+
+2024-12-06T20:59:47-03:00 WARN [main main] This is a warning message: some warning info (main.go:35) app:Basic Usage version:1.0.0 env:test
+
+2024-12-06T20:59:47-03:00 ERROR [main main] This is an error message: some error info (main.go:36) app:Basic Usage version:1.0.0 env:test
+
+2024-12-06T20:59:47-03:00 TRACE [main main] This is a trace message: some trace info (main.go:43) app:Basic Usage version:1.0.0 env:test
 ```
 
 # Advanced Usage
