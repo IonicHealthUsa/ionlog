@@ -5,8 +5,10 @@ import (
 	"os"
 )
 
-const bufsize = 1024
-const maxBufsize = bufsize * 512 // 1/2 MB
+const (
+	bufsize    = 1024
+	maxBufsize = bufsize * 512 // 1/2 MB
+)
 
 type logBuilder struct {
 	buf []byte
@@ -28,7 +30,7 @@ func NewLogBuilder() ILogBuilder {
 
 func (l *logBuilder) writeByte(b byte) {
 	if len(l.buf) >= maxBufsize {
-		fmt.Fprintf(os.Stderr, "logBuilder buffer is full, cannot handle more strings for this log entry.\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] logBuilder buffer is full, cannot handle more strings for this log entry.\n")
 		return
 	}
 	if l.p == uint(len(l.buf)) {
@@ -91,6 +93,8 @@ func hexChar(b byte) byte {
 
 func (l *logBuilder) resetBuff() {
 	l.p = 0
+	l.buf = l.buf[:0] // very important line: avoids blocking the log when maxBufsize is reached.
+
 	l.writeByte('{')
 }
 

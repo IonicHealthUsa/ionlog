@@ -13,6 +13,10 @@ import (
 
 // Start begin the ionlog reports when it does not running
 func Start() {
+	if !started.CompareAndSwap(false, true) {
+		return
+	}
+
 	lock.RLock()
 	defer lock.RUnlock()
 
@@ -30,6 +34,7 @@ func Stop() {
 
 	logger.Stop()
 	logger = service.NewCoreService() // Reset the logger
+	started.Store(false)
 }
 
 // Info logs a message with level info.

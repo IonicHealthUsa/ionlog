@@ -2,13 +2,15 @@
 package memory
 
 import (
-	"log/slog"
+	"fmt"
+	"os"
 	"sync"
 
 	"github.com/cespare/xxhash"
 )
 
 type recordUnity struct {
+	mu      sync.Mutex
 	MsgHash uint64
 }
 
@@ -34,11 +36,15 @@ func NewRecordMemory() IRecordMemory {
 	}
 }
 
-func (r recordUnity) GetMsgHash() uint64 {
+func (r *recordUnity) GetMsgHash() uint64 {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	return r.MsgHash
 }
 
 func (r *recordUnity) SetMsgHash(msg uint64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.MsgHash = msg
 }
 
@@ -47,21 +53,20 @@ func GenHash(s string) uint64 {
 }
 
 func (r *recordMemory) AddRecord(id uint64, msg string) error {
-	if r.readRecord(id) != nil {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.records[id]; exists {
 		return ErrRecordIDCollision
 	}
-	r.writeRecord(
-		id,
-		&recordUnity{
-			MsgHash: GenHash(msg),
-		},
-	)
+
+	r.records[id] = &recordUnity{MsgHash: GenHash(msg)}
 	return nil
 }
 
 func (r *recordMemory) RemoveRecord(id uint64) {
 	if r.GetRecord(id) == nil {
-		slog.Debug("Trying to remove non-existing record")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Trying to remove non-existing record\n")
 		return
 	}
 	r.deleteRecord(id)

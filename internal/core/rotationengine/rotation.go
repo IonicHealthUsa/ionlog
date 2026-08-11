@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/IonicHealthUsa/ionlog/internal/infrastructure/filesystem"
 )
@@ -12,6 +13,7 @@ import (
 type rotationEngine struct {
 	filesystem.Filesystem
 
+	logFileMu     sync.RWMutex
 	logFile       io.WriteCloser
 	folder        string
 	maxFolderSize uint
@@ -46,6 +48,9 @@ func NewRotationEngine(folder string, maxFolderSize uint, rotation PeriodicRotat
 
 // Write writes the log message to the log file.
 func (r *rotationEngine) Write(p []byte) (n int, err error) {
+	r.logFileMu.RLock()
+	defer r.logFileMu.RUnlock()
+
 	if r.logFile == nil {
 		return 0, ErrLogFileNotSet
 	}
@@ -64,9 +69,16 @@ func (r *rotationEngine) CloseLogFile() {
 
 // closeFile closes the log file.
 func (r *rotationEngine) closeFile() {
+	r.logFileMu.Lock()
+	defer r.logFileMu.Unlock()
+	r.closeFileLocked()
+}
+
+// closeFileLocked closes the log file. Callers must hold logFileMu.
+func (r *rotationEngine) closeFileLocked() {
 	if r.logFile != nil {
 		if err := r.logFile.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error to close current log file: %v\n", err)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] Error to close current log file: %v\n", err)
 		}
 		r.logFile = nil
 	}
@@ -74,17 +86,20 @@ func (r *rotationEngine) closeFile() {
 
 func (r *rotationEngine) setLogFile(file io.WriteCloser) {
 	if file == nil {
-		fmt.Fprint(os.Stderr, "Cannot set the log file: file is not valid\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Cannot set the log file: file is not valid\n")
 		return
 	}
 
-	r.closeFile()
+	r.logFileMu.Lock()
+	defer r.logFileMu.Unlock()
+
+	r.closeFileLocked()
 	r.logFile = file
 }
 
 func (r *rotationEngine) autoRotate() {
 	if err := r.assertFolder(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error in assert folder: %v", err)
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] Error in assert folder: %v\n", err)
 		return
 	}
 
@@ -96,13 +111,13 @@ func (r *rotationEngine) autoRotate() {
 	}
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	fileDate, err := r.getFileDate(fileName)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -112,10 +127,14 @@ func (r *rotationEngine) autoRotate() {
 	}
 
 	// no rotaion needed, check if file is open
-	if r.logFile == nil {
+	r.logFileMu.RLock()
+	fileIsOpen := r.logFile != nil
+	r.logFileMu.RUnlock()
+
+	if !fileIsOpen {
 		actualFile, err := r.OpenFile(filepath.Join(r.folder, fileName), os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 			return
 		}
 		r.setLogFile(actualFile)
@@ -129,7 +148,7 @@ func (r *rotationEngine) autoCheckFolderSize() {
 
 	size, err := r.getFolderSize()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
@@ -139,19 +158,19 @@ func (r *rotationEngine) autoCheckFolderSize() {
 
 	oldestFile, err := r.getOldestLogFile()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	if err = r.RemoveFile(filepath.Join(r.folder, oldestFile)); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 
 	// check if it need to create a new file
 	files, err := r.getAllfiles()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] %s\n", err.Error())
 		return
 	}
 	if len(files) == 0 {

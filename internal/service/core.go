@@ -20,7 +20,8 @@ type coreService struct {
 	logEngine       logengine.ILogger
 	rotationService IRotationService
 
-	serviceStatusLock sync.Mutex
+	serviceStatusLock   sync.Mutex
+	rotationServiceLock sync.Mutex
 }
 
 type ICoreService interface {
@@ -42,6 +43,9 @@ func (c *coreService) LogEngine() logengine.ILogger {
 }
 
 func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation) {
+	c.rotationServiceLock.Lock()
+	defer c.rotationServiceLock.Unlock()
+
 	if c.rotationService != nil {
 		c.LogEngine().Writer().DeleteWriter(c.rotationService.RotationEngine())
 		c.rotationService.Stop()
@@ -56,7 +60,7 @@ func (c *coreService) Start(startSync *sync.WaitGroup) {
 	defer func() {
 		if r := recover(); r != nil {
 			ci := runtimeinfo.GetCallerInfo(3)
-			fmt.Fprintf(os.Stderr, "logger service panic: '%v' [%v](%v) %v:%v\n", r, ci.Package, ci.Function, ci.File, ci.Line)
+			fmt.Fprintf(os.Stderr, "[ionlog internal log] logger service panic: '%v' [%v](%v) %v:%v\n", r, ci.Package, ci.Function, ci.File, ci.Line)
 		}
 	}()
 
@@ -66,10 +70,14 @@ func (c *coreService) Start(startSync *sync.WaitGroup) {
 	c.setServiceStatus(Running)
 	defer c.setServiceStatus(Stopped)
 
-	if c.rotationService != nil {
+	c.rotationServiceLock.Lock()
+	rotationService := c.rotationService
+	c.rotationServiceLock.Unlock()
+
+	if rotationService != nil {
 		rotateSync := sync.WaitGroup{}
 		rotateSync.Add(1)
-		go c.rotationService.Start(&rotateSync)
+		go rotationService.Start(&rotateSync)
 		rotateSync.Wait()
 	}
 
@@ -86,8 +94,12 @@ func (c *coreService) Stop() {
 	c.serviceWg.Wait()
 	c.logEngine.FlushReports()
 
-	if c.rotationService != nil {
-		c.rotationService.Stop()
+	c.rotationServiceLock.Lock()
+	rotationService := c.rotationService
+	c.rotationServiceLock.Unlock()
+
+	if rotationService != nil {
+		rotationService.Stop()
 	}
 }
 

@@ -3,6 +3,7 @@ package ionlog
 import (
 	"os"
 	"sync"
+	"sync/atomic"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
 	"github.com/IonicHealthUsa/ionlog/internal/service"
@@ -26,6 +27,7 @@ const DefaultLogFolder = "logs"
 
 var logger = service.NewCoreService()
 var lock = sync.RWMutex{}
+var started atomic.Bool
 
 var DefaultOutput = os.Stdout
 

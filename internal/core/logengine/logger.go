@@ -33,6 +33,7 @@ type logger struct {
 	traceMode    bool
 
 	reportLock sync.Mutex
+	reportsMu  sync.RWMutex
 	closeLock  sync.Mutex
 
 	callerStackDepth     int
@@ -83,10 +84,14 @@ func (l *logger) AsyncReport(r ReportType) {
 	if l.getStatusCloseReport() {
 		return
 	}
+
+	l.reportsMu.RLock()
+	defer l.reportsMu.RUnlock()
+
 	select {
 	case l.reports <- r:
 	case <-time.After(1 * time.Second):
-		fmt.Fprintf(os.Stderr, "logger reports channel is full\n")
+		fmt.Fprintf(os.Stderr, "[ionlog internal log] logger reports channel is full\n")
 	}
 }
 
@@ -115,11 +120,14 @@ func (l *logger) Report(r ReportType) {
 
 func (l *logger) FlushReports() {
 	for {
+		l.reportsMu.RLock()
 		select {
 		case r := <-l.reports:
+			l.reportsMu.RUnlock()
 			l.Report(r)
 
 		case <-time.After(1 * time.Millisecond):
+			l.reportsMu.RUnlock()
 			return
 		}
 	}
@@ -127,12 +135,15 @@ func (l *logger) FlushReports() {
 
 func (l *logger) HandleReports(ctx context.Context) {
 	for {
+		l.reportsMu.RLock()
 		select {
 		case <-ctx.Done():
+			l.reportsMu.RUnlock()
 			l.closeReport()
 			return
 
 		case r := <-l.reports:
+			l.reportsMu.RUnlock()
 			l.Report(r)
 		}
 	}
