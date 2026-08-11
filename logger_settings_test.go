@@ -6,13 +6,13 @@ import (
 	"testing"
 )
 
-func TestSetAttributes(t *testing.T) {
+func TestConfigure(t *testing.T) {
 	// Ensure logger is reset
 	Stop()
 	defer Stop()
 
 	t.Run("should apply multiple attributes", func(t *testing.T) {
-		SetAttributes(
+		Configure(
 			WithTraceMode(true),
 			WithQueueSize(200),
 		)
@@ -33,11 +33,11 @@ func TestWithWriters(t *testing.T) {
 	t.Run("should add and remove writers", func(t *testing.T) {
 		buf := &bytes.Buffer{}
 
-		SetAttributes(WithWriters(buf))
+		Configure(WithWriters(buf))
 
 		// Verify writer is added (indirectly by checking if We can write)
 		// Internal writer access is needed or we just verify it doesn't panic
-		SetAttributes(WithoutWriters(buf))
+		Configure(WithoutWriters(buf))
 	})
 }
 
@@ -47,11 +47,11 @@ func TestWithStaticFields(t *testing.T) {
 
 	t.Run("should manage static fields", func(t *testing.T) {
 		fields := map[string]string{"app": "test-app"}
-		SetAttributes(WithStaticFields(fields))
+		Configure(WithStaticFields(fields))
 
 		// Note: No direct way to check static fields without internal access
 		// but we can verify it doesn't panic and we can remove them
-		SetAttributes(WithoutStaticFields("app"))
+		Configure(WithoutStaticFields("app"))
 	})
 }
 
@@ -61,7 +61,7 @@ func TestWithLogFileRotation(t *testing.T) {
 
 	t.Run("should enable rotation", func(t *testing.T) {
 		folder := "test-logs"
-		SetAttributes(WithLogFileRotation(folder, 10*1024, Daily))
+		Configure(WithLogFileRotation(folder, 10*1024, Daily))
 
 		if _, err := os.Stat(folder); err != nil {
 			t.Errorf("expected folder %s to be created", folder)
@@ -76,7 +76,7 @@ func TestWithQueueSize(t *testing.T) {
 	defer Stop()
 
 	t.Run("should set queue size", func(t *testing.T) {
-		SetAttributes(WithQueueSize(500))
+		Configure(WithQueueSize(500))
 		// Verification would require internal access to the channel capacity
 	})
 }
@@ -86,7 +86,7 @@ func TestWithTraceMode(t *testing.T) {
 	defer Stop()
 
 	t.Run("should toggle trace mode", func(t *testing.T) {
-		SetAttributes(WithTraceMode(true))
+		Configure(WithTraceMode(true))
 
 		lock.RLock()
 		if !logger.LogEngine().TraceMode() {
@@ -94,7 +94,7 @@ func TestWithTraceMode(t *testing.T) {
 		}
 		lock.RUnlock()
 
-		SetAttributes(WithTraceMode(false))
+		Configure(WithTraceMode(false))
 
 		lock.RLock()
 		if logger.LogEngine().TraceMode() {
@@ -110,7 +110,7 @@ func TestWithCallerInfoDepth(t *testing.T) {
 
 	t.Run("should set caller info depth", func(t *testing.T) {
 		const depth = 5
-		SetAttributes(WithCallerInfoDepth(depth))
+		Configure(WithCallerInfoDepth(depth))
 
 		lock.RLock()
 		if logger.LogEngine().GetCallerStackDepth() != depth {
