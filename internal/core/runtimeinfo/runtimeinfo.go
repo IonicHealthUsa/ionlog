@@ -24,11 +24,25 @@ func GetCallerInfo(skip int) CallerInfo {
 	fileLastSlashIndex := strings.LastIndexByte(file, '/')
 
 	// Get function name
-	fullFuncName := runtime.FuncForPC(pc).Name()
+	fn := runtime.FuncForPC(pc)
+	if fn == nil {
+		fmt.Fprint(os.Stderr, "Failed to get caller function information\n")
+		return CallerInfo{File: file[fileLastSlashIndex+1:], Line: line}
+	}
+	fullFuncName := fn.Name()
 
 	lastSlashIndex := strings.LastIndexByte(fullFuncName, '/')
 
 	fistDotIndex := strings.IndexByte(fullFuncName[lastSlashIndex+1:], '.')
+	if fistDotIndex == -1 {
+		// No package-qualifying dot found (e.g. a runtime-synthesized frame);
+		// report the whole name as the function and leave Package empty.
+		return CallerInfo{
+			File:     file[fileLastSlashIndex+1:],
+			Function: fullFuncName[lastSlashIndex+1:],
+			Line:     line,
+		}
+	}
 	pkgEnd := lastSlashIndex + 1 + fistDotIndex
 
 	return CallerInfo{
