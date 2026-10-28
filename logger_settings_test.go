@@ -62,6 +62,7 @@ func TestWithLogFileRotation(t *testing.T) {
 	t.Run("should enable rotation", func(t *testing.T) {
 		folder := "test-logs"
 		Configure(WithLogFileRotation(folder, 10*1024, Daily))
+		Configure(WithLogFileRotation(folder, 10*1024, Daily, WithMaxFiles(4), WithMaxFileSize(Kibibyte)))
 
 		if _, err := os.Stat(folder); err != nil {
 			t.Errorf("expected folder %s to be created", folder)

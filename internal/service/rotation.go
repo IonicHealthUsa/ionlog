@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/IonicHealthUsa/ionlog/internal/core/rotationengine"
 	"github.com/IonicHealthUsa/ionlog/internal/core/runtimeinfo"
@@ -27,10 +26,10 @@ type IRotationService interface {
 	RotationEngine() rotationengine.IRotationEngine
 }
 
-func NewRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation) IRotationService {
+func NewRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation, opts ...rotationengine.Option) IRotationService {
 	rs := &rotationService{}
 	rs.ctx, rs.cancel = context.WithCancel(context.Background())
-	rs.rotationEngine = rotationengine.NewRotationEngine(folder, maxFolderSize, rotation)
+	rs.rotationEngine = rotationengine.NewRotationEngine(folder, maxFolderSize, rotation, opts...)
 	return rs
 }
 
@@ -56,18 +55,7 @@ func (r *rotationService) Start(startSync *sync.WaitGroup) {
 		startSync.Done()
 	}
 
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-r.ctx.Done():
-			return
-
-		case <-ticker.C:
-			r.rotationEngine.AutoChecks()
-		}
-	}
+	<-r.ctx.Done()
 }
 
 func (r *rotationService) Stop() {
