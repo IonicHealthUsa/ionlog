@@ -59,9 +59,20 @@ func TestWithLogFileRotation(t *testing.T) {
 	Stop()
 	defer Stop()
 
-	t.Run("should enable rotation", func(t *testing.T) {
+	t.Run("must compile without opt params", func(t *testing.T) {
 		folder := "test-logs"
 		Configure(WithLogFileRotation(folder, 10*1024, Daily))
+
+		if _, err := os.Stat(folder); err != nil {
+			t.Errorf("expected folder %s to be created", folder)
+		}
+
+		os.RemoveAll(folder)
+	})
+
+	t.Run("must compile with opt params", func(t *testing.T) {
+		folder := "test-logs"
+		Configure(WithLogFileRotation(folder, 10*1024, Daily, WithMaxFiles(4), WithMaxFileSize(Kibibyte)))
 
 		if _, err := os.Stat(folder); err != nil {
 			t.Errorf("expected folder %s to be created", folder)

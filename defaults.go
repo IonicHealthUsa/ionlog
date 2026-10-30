@@ -18,6 +18,7 @@ const (
 
 const (
 	NoMaxFolderSize uint = rotationengine.NoMaxFolderSize
+	DefaultMaxFiles uint = rotationengine.DefaultMaxFiles
 	Kibibyte        uint = 1024
 	Mebibyte        uint = 1024 * Kibibyte
 	Gibibyte        uint = 1024 * Mebibyte

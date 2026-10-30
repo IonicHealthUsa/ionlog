@@ -76,7 +76,7 @@ func TestGetAllFiles(t *testing.T) {
 			t.Error("expected a error, but got nil")
 		}
 		if files != nil {
-			t.Errorf("expected no files, but got %q", files)
+			t.Errorf("expected no files, but got %v", files)
 		}
 
 		if _, err := os.Stat(folderName); err != nil {
@@ -108,8 +108,9 @@ func TestGetAllFiles(t *testing.T) {
 
 		otherFolder := "ionic_health"
 		_ = os.Mkdir(filepath.Join(_r.folder, otherFolder), 0666)
+		_r.createNewFile(time.Now(), 0)
 
-		files, err := _r.getAllfiles()
+		files, _ := logFiles(t, _r)
 
 		if err != nil {
 			t.Errorf("expected no error, but got %q", err)
@@ -218,6 +219,7 @@ func TestGetMostRecentLogFile(t *testing.T) {
 		_ = os.NewFile(0666, filepath.Join(_r.folder, fileName))
 
 		filename := fmt.Sprintf(logFilePattern, time.Now().Format(time.DateOnly))
+		_r.createNewFile(time.Now(), 0)
 
 		file, err := _r.getMostRecentLogFile()
 		if err != nil {
@@ -263,7 +265,7 @@ func TestCreateNewFile(t *testing.T) {
 		_r.logFile = nil
 		_r.folder = ""
 
-		_r.createNewFile()
+		_r.createNewFile(time.Now(), 0)
 
 		filename := fmt.Sprintf(logFilePattern, time.Now().Format(time.DateOnly))
 
@@ -310,7 +312,7 @@ func TestCreateNewFile(t *testing.T) {
 
 		_r.logFile = nil
 
-		_r.createNewFile()
+		_r.createNewFile(time.Now(), 0)
 
 		if _r.logFile == nil {
 			t.Error("expected log file to be set, but is nil")
@@ -725,6 +727,7 @@ func TestGetFolderSize(t *testing.T) {
 			t.Fatal("NewRotationEngine() did not return a instance of rotation engine")
 		}
 
+		_r.createNewFile(time.Now(), 0)
 		size, err := _r.getFolderSize()
 		if err != nil {
 			t.Error("expected a error, but got nil")
@@ -751,4 +754,35 @@ func TestGetFolderSize(t *testing.T) {
 			t.Error("expected remove all file and the directory")
 		}
 	})
+}
+
+func (r *rotationEngine) getMostRecentLogFile() (string, error) {
+	files, err := r.getAllfiles()
+	if err != nil {
+		return "", err
+	}
+	if len(files) == 0 {
+		return "", ErrNoLogFileFound
+	}
+	return files[len(files)-1].name, nil
+}
+
+func (r *rotationEngine) getOldestLogFile() (string, error) {
+	files, err := r.getAllfiles()
+	if err != nil {
+		return "", err
+	}
+	if len(files) == 0 {
+		return "", ErrNoLogFileFound
+	}
+	return files[0].name, nil
+}
+
+func (r *rotationEngine) getFolderSize() (uint, error) {
+	files, err := r.getAllfiles()
+	var size uint
+	for _, f := range files {
+		size += f.size
+	}
+	return size, err
 }
