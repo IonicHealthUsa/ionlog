@@ -27,7 +27,7 @@ type coreService struct {
 type ICoreService interface {
 	IService
 	LogEngine() logengine.ILogger
-	CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation)
+	CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation, opts ...rotationengine.Option)
 }
 
 func NewCoreService() ICoreService {
@@ -42,7 +42,7 @@ func (c *coreService) LogEngine() logengine.ILogger {
 	return c.logEngine
 }
 
-func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation) {
+func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, rotation rotationengine.PeriodicRotation, opts ...rotationengine.Option) {
 	c.rotationServiceLock.Lock()
 	defer c.rotationServiceLock.Unlock()
 
@@ -51,7 +51,7 @@ func (c *coreService) CreateRotationService(folder string, maxFolderSize uint, r
 		c.rotationService.Stop()
 	}
 
-	c.rotationService = NewRotationService(folder, maxFolderSize, rotation)
+	c.rotationService = NewRotationService(folder, maxFolderSize, rotation, opts...)
 	c.LogEngine().Writer().AddWriter(c.rotationService.RotationEngine())
 }
 

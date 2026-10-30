@@ -14,4 +14,5 @@ const (
 	KB              uint = 1024
 	MB              uint = 1024 * KB
 	GB              uint = 1024 * MB
+	DefaultMaxFiles uint = 10
 )

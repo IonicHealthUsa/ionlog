@@ -53,6 +53,9 @@ func WithoutStaticFields(fields ...string) customAttrs {
 	}
 }
 
+// RotationOption sets the size at which a log file continues in a new part.
+type RotationOption = rotationengine.Option
+
 // WithLogFileRotation enables log file rotation,
 // specifying the directory where log files will be stored,
 // the maximum size of the log folder in bytes, and the rotation frequency.
@@ -60,10 +63,21 @@ func WithLogFileRotation(
 	folder string,
 	folderMaxSize uint,
 	period rotationengine.PeriodicRotation,
+	opts ...RotationOption,
 ) customAttrs {
 	return func(i service.ICoreService) {
-		i.CreateRotationService(folder, folderMaxSize, period)
+		i.CreateRotationService(folder, folderMaxSize, period, opts...)
 	}
+}
+
+// WithMaxFileSize breaks a log file at size bytes, capped at the max folder size.
+func WithMaxFileSize(size uint) RotationOption {
+	return rotationengine.WithMaxFileSize(size)
+}
+
+// WithMaxFiles breaks a log file at max folder size / count bytes (default DefaultMaxFiles).
+func WithMaxFiles(count uint) RotationOption {
+	return rotationengine.WithMaxFiles(count)
 }
 
 // WithQueueSize sets the size of the reports queue,
